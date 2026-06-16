@@ -512,25 +512,32 @@ function actualizarBloqueResolucionManual() {
   document.getElementById('manual-bloque-escalar').classList.toggle('oculto', tipo !== 'escalar');
 }
 
+/**
+ * El combo de plantilla sugerida se llena desde la Base de Conocimiento
+ * (no desde el archivo estático de plantillas): así, cada entrada que
+ * se agregue ahí para una categoría aparece automáticamente como opción
+ * aquí, sin límite de cantidad por categoría.
+ */
 function actualizarPlantillasManual() {
   const categoria = document.getElementById('manual-categoria').value;
   const select = document.getElementById('manual-plantilla-select');
-  const claves = Object.keys(PLANTILLAS).filter(k => PLANTILLAS[k].categoria === categoria);
+  const entradas = obtenerBaseConocimiento().filter(e => e.categoria === categoria);
 
-  if (claves.length === 0) {
+  if (entradas.length === 0) {
     select.innerHTML = '<option value="">(Sin plantilla para esta categoría)</option>';
     document.getElementById('manual-plantilla-texto').value = '';
     return;
   }
 
   const sugerida = (typeof PLANTILLA_POR_CATEGORIA !== 'undefined') ? PLANTILLA_POR_CATEGORIA[categoria] : null;
-  select.innerHTML = claves.map(k => `<option value="${k}" ${k === sugerida ? 'selected' : ''}>${PLANTILLAS[k].titulo}</option>`).join('');
+  select.innerHTML = entradas.map(e => `<option value="${e.id}" ${e.origenPlantilla === sugerida ? 'selected' : ''}>${escaparHtml(e.titulo)}</option>`).join('');
   document.getElementById('manual-plantilla-texto').value = obtenerTextoPlantillaSeleccionada();
 }
 
 function obtenerTextoPlantillaSeleccionada() {
-  const clave = document.getElementById('manual-plantilla-select').value;
-  return clave && PLANTILLAS[clave] ? PLANTILLAS[clave].texto : '';
+  const id = document.getElementById('manual-plantilla-select').value;
+  const entrada = obtenerBaseConocimiento().find(e => e.id === id);
+  return entrada ? entrada.solucion : '';
 }
 
 // ============================================================

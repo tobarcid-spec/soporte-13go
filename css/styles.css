@@ -99,6 +99,7 @@ code {
   border-bottom: 1px solid var(--bordes);
 }
 .sidebar-logo i { color: var(--azul-acento); font-size: 22px; }
+#sidebar-logo-empresa { max-height: 28px; max-width: 140px; object-fit: contain; }
 
 .sidebar-nav {
   flex: 1;
@@ -207,6 +208,9 @@ code {
 .form-grupo { display: flex; flex-direction: column; gap: 6px; }
 .form-grupo-ancho { grid-column: 1 / -1; }
 .form-acciones { display: flex; justify-content: flex-end; }
+
+.logo-preview-fila { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.logo-preview { max-height: 60px; max-width: 200px; object-fit: contain; border: 1px solid var(--bordes); border-radius: 6px; padding: 4px; background: var(--fondo-principal); }
 
 label { font-weight: 600; font-size: 12px; color: var(--texto-secundario); }
 

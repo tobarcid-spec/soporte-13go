@@ -71,6 +71,40 @@ function guardarConfig(cambios) {
 }
 
 // ============================================================
+// LOGO DE LA EMPRESA
+// ============================================================
+// Se guarda aparte de "config" (no en CLAVES_SINCRONIZADAS) a propósito:
+// Google Sheets limita cada celda a 50.000 caracteres, y una imagen en
+// base64 puede superar eso fácilmente. El logo queda solo en este
+// navegador/equipo, pero viaja en el backup/restauración de JSON.
+const LOGO_MAX_BYTES = 500 * 1024; // 500 KB
+
+function obtenerLogoEmpresa() {
+  return leerLS('logo_empresa', '');
+}
+
+function guardarLogoEmpresa(dataUrl) {
+  guardarLS('logo_empresa', dataUrl);
+}
+
+/** Refleja el logo configurado (o el ícono por defecto) en el sidebar. */
+function actualizarLogoSidebar() {
+  const logo = obtenerLogoEmpresa();
+  const img = document.getElementById('sidebar-logo-empresa');
+  const iconoDefecto = document.getElementById('sidebar-icono-defecto');
+  if (!img || !iconoDefecto) return;
+
+  if (logo) {
+    img.src = logo;
+    img.classList.remove('oculto');
+    iconoDefecto.classList.add('oculto');
+  } else {
+    img.classList.add('oculto');
+    iconoDefecto.classList.remove('oculto');
+  }
+}
+
+// ============================================================
 // HELPERS DE FORMATO
 // ============================================================
 
@@ -216,7 +250,10 @@ function cambiarModulo(nombre) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('activo', n.dataset.modulo === nombre));
   document.getElementById('header-modulo-titulo').textContent = TITULOS_MODULO[nombre] || '';
 
-  if (nombre === 'nuevo-caso') cargarCorreosPendientes();
+  if (nombre === 'nuevo-caso') {
+    cargarCorreosPendientes();
+    actualizarPlantillasManual(); // refresca por si se agregaron entradas en Base de Conocimiento
+  }
   if (nombre === 'casos-activos') renderizarTablaTickets();
   if (nombre === 'bugs') renderizarModuloBugs();
   if (nombre === 'conocimiento') renderizarListaConocimiento();
@@ -287,6 +324,13 @@ function renderizarConfiguracion() {
   document.getElementById('config-responsable').value = config.responsable || '';
   document.getElementById('config-client-id').value = config.clientId || '';
   document.getElementById('config-api-key').value = config.apiKey || '';
+
+  const logo = obtenerLogoEmpresa();
+  const logoPreview = document.getElementById('config-logo-preview');
+  const btnQuitarLogo = document.getElementById('btn-quitar-logo');
+  logoPreview.src = logo || '';
+  logoPreview.classList.toggle('oculto', !logo);
+  btnQuitarLogo.classList.toggle('oculto', !logo);
 
   const estadoDiv = document.getElementById('config-gmail-estado');
   const conectado = gmailConectado();
@@ -378,6 +422,34 @@ function inicializarModuloConfiguracion() {
     mostrarToast('Identidad guardada', 'exito');
   });
 
+  document.getElementById('config-logo-input').addEventListener('change', evento => {
+    const archivo = evento.target.files[0];
+    if (!archivo) return;
+
+    if (archivo.size > LOGO_MAX_BYTES) {
+      mostrarToast('El logo es muy pesado (máx. 500 KB). Usa una imagen más liviana.', 'error');
+      evento.target.value = '';
+      return;
+    }
+
+    const lector = new FileReader();
+    lector.onload = () => {
+      guardarLogoEmpresa(lector.result);
+      mostrarToast('Logo guardado', 'exito');
+      renderizarConfiguracion();
+      actualizarLogoSidebar();
+    };
+    lector.readAsDataURL(archivo);
+  });
+
+  document.getElementById('btn-quitar-logo').addEventListener('click', () => {
+    guardarLogoEmpresa('');
+    document.getElementById('config-logo-input').value = '';
+    mostrarToast('Logo eliminado', 'aviso');
+    renderizarConfiguracion();
+    actualizarLogoSidebar();
+  });
+
   document.getElementById('btn-guardar-credenciales').addEventListener('click', () => {
     guardarConfig({
       clientId: document.getElementById('config-client-id').value.trim(),
@@ -466,7 +538,8 @@ function inicializarModuloConfiguracion() {
 
 const CLAVES_BACKUP = [
   'tickets', 'correos_descartados', 'bugs_log', 'knowledge_base',
-  'config', 'gmail_label_ids', 'sync_log', 'filtros_descarte', 'sheet_id'
+  'config', 'gmail_label_ids', 'sync_log', 'filtros_descarte', 'sheet_id',
+  'logo_empresa'
 ];
 
 function exportarBackupCompleto() {
@@ -584,6 +657,10 @@ function inicializarApp() {
   initAuth();
   mostrarWizardSiNecesario();
 
+  // Se siembra antes que el formulario manual, que depende de estos datos
+  // para poblar el combo de "Plantilla sugerida" por categoría.
+  inicializarBaseConocimiento();
+
   inicializarNavegacionSidebar();
   inicializarTabsNuevoCaso();
   inicializarFormularioManual();
@@ -595,6 +672,7 @@ function inicializarApp() {
 
   actualizarBadgesSidebar();
   actualizarHeaderSync();
+  actualizarLogoSidebar();
   cambiarModulo('nuevo-caso');
 }
 

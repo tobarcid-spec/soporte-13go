@@ -119,7 +119,8 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <i class="ti ti-headset"></i>
+      <img id="sidebar-logo-empresa" class="oculto" alt="Logo de la empresa">
+      <i id="sidebar-icono-defecto" class="ti ti-headset"></i>
       <span>Soporte 13GO</span>
     </div>
     <nav class="sidebar-nav">
@@ -456,6 +457,15 @@
           <div class="form-grupo">
             <label for="config-responsable">Nombre del responsable</label>
             <input type="text" id="config-responsable">
+          </div>
+          <div class="form-grupo">
+            <label for="config-logo-input">Logo de la empresa</label>
+            <div class="logo-preview-fila">
+              <img id="config-logo-preview" class="logo-preview oculto" alt="Logo de la empresa">
+              <input type="file" id="config-logo-input" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+              <button id="btn-quitar-logo" class="btn btn-secundario oculto" type="button">Quitar logo</button>
+            </div>
+            <p class="texto-secundario texto-pequeno">Se usa en el sidebar y en los reportes exportados. Formatos: PNG, JPG, SVG o WEBP.</p>
           </div>
           <button id="btn-guardar-identidad" class="btn btn-primario">Guardar</button>
         </div>

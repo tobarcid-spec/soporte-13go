@@ -395,6 +395,7 @@ function exportarReporteJSON() {
 function exportarReporteHTML() {
   const d = obtenerDatosReporteActual();
   const config = obtenerConfig();
+  const logo = typeof obtenerLogoEmpresa === 'function' ? obtenerLogoEmpresa() : '';
 
   const filasTabla = d.ticketsSemana.map(t => `
     <tr>
@@ -422,6 +423,7 @@ function exportarReporteHTML() {
 </style>
 </head>
 <body>
+  ${logo ? `<img src="${logo}" alt="Logo" style="max-height:60px;max-width:220px;display:block;margin-bottom:10px;">` : ''}
   <h1>Reporte Soporte 13GO — Semana ${generarNumeroSemana(d.valorSemana)}</h1>
   <p>${formatearFechaCorta(d.lunes)} al ${formatearFechaCorta(d.domingo)}</p>
   <p><strong>${escaparHtml(config.nombreArea || '')}</strong> — Responsable: ${escaparHtml(config.responsable || '')}</p>
