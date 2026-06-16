@@ -54,6 +54,11 @@ function leerLS(clave, valorPorDefecto) {
 
 function guardarLS(clave, valor) {
   localStorage.setItem(clave, JSON.stringify(valor));
+  // Si la clave es de las sincronizadas con Google Sheets, programar la subida.
+  if (typeof CLAVES_SINCRONIZADAS !== 'undefined' && CLAVES_SINCRONIZADAS.includes(clave)
+    && typeof programarSubidaASheet === 'function') {
+    programarSubidaASheet(clave);
+  }
 }
 
 function obtenerConfig() {
@@ -293,6 +298,17 @@ function renderizarConfiguracion() {
   document.getElementById('btn-conectar-gmail-config').classList.toggle('oculto', conectado);
   document.getElementById('btn-desconectar-gmail').classList.toggle('oculto', !conectado);
 
+  // Estado de sincronización con Google Sheets (almacén central de datos)
+  const estadoSheets = document.getElementById('config-sheets-estado');
+  if (estadoSheets) {
+    const sincronizado = typeof sheetsConectado === 'function' && sheetsConectado();
+    estadoSheets.className = 'aviso-caja ' + (sincronizado ? 'aviso-ok' : 'aviso-alerta');
+    estadoSheets.innerHTML = sincronizado
+      ? `<i class="ti ti-cloud-check"></i><p>Datos sincronizados con <a href="${urlHojaDatos()}" target="_blank">Google Sheets</a>. Disponibles desde cualquier navegador conectado a esta cuenta.</p>`
+      : `<i class="ti ti-cloud-off"></i><p>Sin sincronizar. Conecta Gmail/Google para guardar los datos también en una planilla y verlos desde cualquier navegador.</p>`;
+  }
+  document.getElementById('btn-forzar-sync-sheets')?.classList.toggle('oculto', !conectado);
+
   // Tabla de filtros sugeridos
   const tablaFiltros = document.getElementById('config-tabla-filtros');
   tablaFiltros.innerHTML = `
@@ -374,6 +390,17 @@ function inicializarModuloConfiguracion() {
   document.getElementById('btn-conectar-gmail-config').addEventListener('click', conectarGmail);
   document.getElementById('btn-desconectar-gmail').addEventListener('click', desconectarGmail);
 
+  document.getElementById('btn-forzar-sync-sheets')?.addEventListener('click', async () => {
+    mostrarSpinner('Sincronizando con Google Sheets...');
+    await inicializarSincronizacionSheets();
+    ocultarSpinner();
+    mostrarToast('Sincronización con Sheets completada', 'exito');
+    renderizarTablaTickets();
+    renderizarModuloBugs();
+    renderizarListaConocimiento();
+    actualizarBadgesSidebar();
+  });
+
   document.getElementById('btn-agregar-remitente').addEventListener('click', () => {
     const input = document.getElementById('input-nuevo-remitente');
     const valor = input.value.trim().toLowerCase();
@@ -439,7 +466,7 @@ function inicializarModuloConfiguracion() {
 
 const CLAVES_BACKUP = [
   'tickets', 'correos_descartados', 'bugs_log', 'knowledge_base',
-  'config', 'gmail_label_ids', 'sync_log', 'filtros_descarte'
+  'config', 'gmail_label_ids', 'sync_log', 'filtros_descarte', 'sheet_id'
 ];
 
 function exportarBackupCompleto() {

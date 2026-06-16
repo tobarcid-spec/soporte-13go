@@ -195,6 +195,7 @@
             <div class="form-grupo">
               <label for="manual-canal">Canal</label>
               <select id="manual-canal" required>
+                <option value="gmail">Gmail</option>
                 <option value="instagram">Instagram</option>
                 <option value="twitter">Twitter / X</option>
                 <option value="facebook">Facebook</option>
@@ -484,6 +485,24 @@
         </div>
 
         <div class="config-seccion">
+          <h3>Sincronización con Google Sheets</h3>
+          <div id="config-sheets-estado" class="aviso-caja"></div>
+          <p class="texto-secundario">
+            Los datos (tickets, escalamientos, base de conocimiento y configuración)
+            se guardan también en una planilla de Google Sheets en el Drive de la
+            cuenta conectada, además de en este navegador. Así puedes entrar desde
+            cualquier navegador o equipo con la misma cuenta de Google y ver siempre
+            los mismos datos.
+          </p>
+          <ol class="lista-instrucciones">
+            <li>En el mismo proyecto de Google Cloud, habilitar <strong>Google Sheets API</strong> y <strong>Google Drive API</strong></li>
+            <li>No se necesitan credenciales nuevas — usa el mismo CLIENT_ID y API_KEY de arriba</li>
+            <li>Al conectar Gmail, el navegador pedirá también permiso para Sheets y Drive</li>
+          </ol>
+          <button id="btn-forzar-sync-sheets" class="btn btn-secundario oculto">Forzar sincronización</button>
+        </div>
+
+        <div class="config-seccion">
           <h3>Filtros de Gmail (recomendados)</h3>
           <div class="tabla-scroll">
             <table class="tabla-filtros-gmail" id="config-tabla-filtros"></table>
@@ -544,6 +563,7 @@
 <script src="data/plantillas.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/gmail.js"></script>
+<script src="js/sheets.js"></script>
 <script src="js/tickets.js"></script>
 <script src="js/bugs.js"></script>
 <script src="js/conocimiento.js"></script>
