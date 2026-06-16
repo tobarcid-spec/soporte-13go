@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soporte 13GO</title>
+
+<!-- Tabler Icons (solo CSS de iconos, sin frameworks JS) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- SPINNER GLOBAL DE CARGA -->
+<!-- ============================================================ -->
+<div id="spinner-overlay" class="spinner-overlay oculto">
+  <div class="spinner"></div>
+  <p id="spinner-texto">Sincronizando con Gmail...</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- CONTENEDOR DE NOTIFICACIONES TOAST -->
+<!-- ============================================================ -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ============================================================ -->
+<!-- MODAL DE CONFIRMACIÓN GENÉRICO -->
+<!-- ============================================================ -->
+<div id="modal-confirmar" class="modal-overlay oculto">
+  <div class="modal-box">
+    <h3 id="modal-confirmar-titulo">¿Estás seguro?</h3>
+    <p id="modal-confirmar-mensaje"></p>
+    <div id="modal-confirmar-extra"></div>
+    <div class="modal-acciones">
+      <button id="modal-confirmar-cancelar" class="btn btn-secundario">Cancelar</button>
+      <button id="modal-confirmar-aceptar" class="btn btn-peligro">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PANTALLA DE BIENVENIDA — WIZARD DE 3 PASOS -->
+<!-- ============================================================ -->
+<div id="wizard" class="wizard-overlay oculto">
+  <div class="wizard-box">
+    <div class="wizard-pasos">
+      <span class="wizard-paso-indicador activo" data-paso="1">1</span>
+      <span class="wizard-paso-indicador" data-paso="2">2</span>
+      <span class="wizard-paso-indicador" data-paso="3">3</span>
+    </div>
+
+    <!-- Paso 1: Identidad -->
+    <section id="wizard-paso-1" class="wizard-paso">
+      <h2>Bienvenido a Soporte 13GO</h2>
+      <p class="texto-secundario">Configuremos tu sistema de gestión de tickets en 3 pasos rápidos.</p>
+      <h3>Paso 1 — Identidad</h3>
+      <label for="wizard-nombre-area">Nombre del área</label>
+      <input type="text" id="wizard-nombre-area" placeholder="Ej: Soporte al cliente 13GO">
+      <label for="wizard-responsable">Nombre del responsable</label>
+      <input type="text" id="wizard-responsable" placeholder="Ej: Juan Pérez">
+      <div class="wizard-acciones">
+        <button id="wizard-siguiente-1" class="btn btn-primario">Siguiente</button>
+      </div>
+    </section>
+
+    <!-- Paso 2: Conectar Gmail -->
+    <section id="wizard-paso-2" class="wizard-paso oculto">
+      <h3>Paso 2 — Conectar Gmail (opcional)</h3>
+      <p class="texto-secundario">
+        Para importar tickets automáticamente desde tu correo necesitas credenciales de Google Cloud:
+      </p>
+      <ol class="lista-instrucciones">
+        <li>Ir a <code>console.cloud.google.com</code></li>
+        <li>Crear un proyecto nuevo</li>
+        <li>Habilitar la Gmail API</li>
+        <li>Crear una credencial OAuth 2.0 (tipo: aplicación web)</li>
+        <li>Agregar <code>http://localhost</code> como origen autorizado</li>
+        <li>Copiar el CLIENT_ID y la API_KEY en los campos abajo</li>
+      </ol>
+      <label for="wizard-client-id">CLIENT_ID</label>
+      <input type="text" id="wizard-client-id" placeholder="xxxxx.apps.googleusercontent.com">
+      <label for="wizard-api-key">API_KEY</label>
+      <input type="text" id="wizard-api-key" placeholder="AIza...">
+      <div class="wizard-acciones">
+        <button id="wizard-conectar-gmail" class="btn btn-primario">Conectar Gmail</button>
+        <a href="#" id="wizard-saltar-gmail" class="enlace">Saltar por ahora — usar solo modo manual</a>
+      </div>
+    </section>
+
+    <!-- Paso 3: Filtros Gmail (informativo) -->
+    <section id="wizard-paso-3" class="wizard-paso oculto">
+      <h3>Paso 3 — Configurar filtros en Gmail</h3>
+      <p class="texto-secundario">
+        La clasificación de correos la hace Gmail mediante filtros. Crea un filtro por cada etiqueta
+        usando estas palabras clave sugeridas:
+      </p>
+      <div class="tabla-scroll">
+        <table class="tabla-filtros-gmail" id="wizard-tabla-filtros">
+          <thead><tr><th>Etiqueta</th><th>Palabras clave sugeridas</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <a href="https://mail.google.com/mail/u/0/#settings/filters" target="_blank" class="enlace">
+        Ir a configuración de filtros de Gmail →
+      </a>
+      <div class="wizard-acciones">
+        <button id="wizard-finalizar" class="btn btn-primario">Ir al sistema</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- APP PRINCIPAL -->
+<!-- ============================================================ -->
+<div id="app" class="app-layout oculto">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <i class="ti ti-headset"></i>
+      <span>Soporte 13GO</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item activo" data-modulo="nuevo-caso">
+        <i class="ti ti-plus"></i><span>Nuevo caso</span>
+      </button>
+      <button class="nav-item" data-modulo="casos-activos">
+        <i class="ti ti-list-details"></i><span>Casos activos</span>
+        <span class="badge-contador" id="badge-casos-activos">0</span>
+      </button>
+      <button class="nav-item" data-modulo="bugs">
+        <i class="ti ti-bug"></i><span>Bugs y escalamientos</span>
+        <span class="badge-contador badge-alerta" id="badge-escalamientos">0</span>
+      </button>
+      <button class="nav-item" data-modulo="conocimiento">
+        <i class="ti ti-book"></i><span>Base de conocimiento</span>
+      </button>
+      <button class="nav-item" data-modulo="reporte">
+        <i class="ti ti-chart-bar"></i><span>Reporte semanal</span>
+      </button>
+      <button class="nav-item" data-modulo="configuracion">
+        <i class="ti ti-settings"></i><span>Configuración</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="btn-conectar-gmail-sidebar" class="btn btn-secundario btn-ancho-completo">
+        <i class="ti ti-mail"></i> Conectar Gmail
+      </button>
+    </div>
+  </aside>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="contenedor-principal">
+
+    <!-- HEADER -->
+    <header class="header-app">
+      <div class="header-titulo">
+        <h1 id="header-modulo-titulo">Nuevo caso</h1>
+      </div>
+      <div class="header-acciones">
+        <span id="header-cuenta-gmail" class="header-cuenta-gmail oculto">
+          <i class="ti ti-mail-check"></i> <span id="header-cuenta-gmail-email"></span>
+        </span>
+        <button id="btn-sincronizar-gmail" class="btn btn-primario">
+          <i class="ti ti-refresh"></i> Sincronizar Gmail
+        </button>
+        <span id="header-ultima-sync" class="texto-secundario texto-pequeno"></span>
+      </div>
+    </header>
+
+    <!-- ÁREA DE CONTENIDO -->
+    <main class="contenido-principal">
+
+      <!-- ===================== MÓDULO 1: NUEVO CASO ===================== -->
+      <section id="modulo-nuevo-caso" class="modulo">
+        <div class="tabs">
+          <button class="tab-btn activo" data-tab="tab-gmail">Desde Gmail</button>
+          <button class="tab-btn" data-tab="tab-manual">Ingreso manual</button>
+        </div>
+
+        <!-- Tab A: Desde Gmail -->
+        <div id="tab-gmail" class="tab-contenido activo">
+          <div id="gmail-no-conectado" class="aviso-caja oculto">
+            <i class="ti ti-mail-off"></i>
+            <p>No tienes Gmail conectado. Conéctate desde el botón "Conectar Gmail" para ver tus correos aquí.</p>
+          </div>
+          <div id="lista-correos-gmail" class="lista-correos"></div>
+        </div>
+
+        <!-- Tab B: Ingreso manual -->
+        <div id="tab-manual" class="tab-contenido">
+          <form id="form-nuevo-caso-manual" class="formulario">
+            <div class="form-grupo">
+              <label for="manual-canal">Canal</label>
+              <select id="manual-canal" required>
+                <option value="instagram">Instagram</option>
+                <option value="twitter">Twitter / X</option>
+                <option value="facebook">Facebook</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="form-grupo">
+              <label for="manual-fecha">Fecha</label>
+              <input type="date" id="manual-fecha" required>
+            </div>
+            <div class="form-grupo">
+              <label for="manual-nombre">Nombre o usuario</label>
+              <input type="text" id="manual-nombre" required placeholder="Ej: @usuario13go">
+            </div>
+            <div class="form-grupo form-grupo-ancho">
+              <label for="manual-descripcion">Descripción del problema</label>
+              <textarea id="manual-descripcion" rows="3" required></textarea>
+            </div>
+            <div class="form-grupo">
+              <label for="manual-prioridad">Prioridad</label>
+              <select id="manual-prioridad">
+                <option value="P1-Critico">P1 Crítico</option>
+                <option value="P2-Alto">P2 Alto</option>
+                <option value="P3-Normal" selected>P3 Normal</option>
+                <option value="P4-Menor">P4 Menor</option>
+              </select>
+            </div>
+            <div class="form-grupo">
+              <label for="manual-categoria">Categoría</label>
+              <select id="manual-categoria"></select>
+            </div>
+
+            <div id="manual-alerta-escalar" class="aviso-caja aviso-alerta oculto form-grupo-ancho">
+              <i class="ti ti-alert-triangle"></i>
+              <p>Esta categoría suele requerir escalamiento a TI. Considera escalar este caso.</p>
+            </div>
+
+            <div class="form-grupo form-grupo-ancho">
+              <label>Tipo de resolución</label>
+              <div class="radio-grupo">
+                <label><input type="radio" name="manual-tipo-resolucion" value="automatica" checked> Respuesta automática</label>
+                <label><input type="radio" name="manual-tipo-resolucion" value="manual"> Respuesta manual</label>
+                <label><input type="radio" name="manual-tipo-resolucion" value="escalar"> Escalar a TI</label>
+              </div>
+            </div>
+
+            <!-- Sub-bloque: respuesta automática -->
+            <div id="manual-bloque-automatica" class="form-grupo form-grupo-ancho">
+              <label for="manual-plantilla-select">Plantilla sugerida</label>
+              <select id="manual-plantilla-select"></select>
+              <textarea id="manual-plantilla-texto" rows="8" readonly></textarea>
+              <button type="button" id="btn-copiar-plantilla" class="btn btn-secundario">
+                <i class="ti ti-copy"></i> Copiar plantilla
+              </button>
+            </div>
+
+            <!-- Sub-bloque: respuesta manual -->
+            <div id="manual-bloque-manual" class="form-grupo form-grupo-ancho oculto">
+              <label for="manual-respuesta-texto">Redactar respuesta</label>
+              <textarea id="manual-respuesta-texto" rows="6"></textarea>
+            </div>
+
+            <!-- Sub-bloque: escalar a TI -->
+            <div id="manual-bloque-escalar" class="form-grupo form-grupo-ancho oculto">
+              <label for="manual-motivo-escalar">Motivo de escalamiento</label>
+              <select id="manual-motivo-escalar">
+                <option value="Reactivación de suscripción">Reactivación de suscripción</option>
+                <option value="Error técnico en la app">Error técnico en la app (caída Firebase u otro)</option>
+                <option value="Error en contenido">Error en contenido</option>
+                <option value="Solicitud de reembolso / devolución">Solicitud de reembolso / devolución</option>
+                <option value="Sin respuesta — derivar a TI">Sin respuesta — derivar a TI</option>
+              </select>
+              <label for="manual-nota-ti">Nota para TI</label>
+              <textarea id="manual-nota-ti" rows="3"></textarea>
+            </div>
+
+            <div class="form-grupo form-grupo-ancho form-acciones">
+              <button type="submit" class="btn btn-primario">
+                <i class="ti ti-check"></i> Guardar caso
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===================== MÓDULO 2: CASOS ACTIVOS ===================== -->
+      <section id="modulo-casos-activos" class="modulo oculto">
+        <div class="filtros-barra">
+          <input type="text" id="filtro-busqueda" placeholder="Buscar por remitente, asunto o descripción...">
+          <select id="filtro-estado">
+            <option value="">Todos los estados</option>
+            <option value="abierto">Abierto</option>
+            <option value="resuelto">Resuelto</option>
+            <option value="escalado">Escalado a TI</option>
+            <option value="auto_respondido">Auto-respondido</option>
+          </select>
+          <select id="filtro-canal">
+            <option value="">Todos los canales</option>
+            <option value="gmail">Gmail</option>
+            <option value="instagram">Instagram</option>
+            <option value="twitter">Twitter / X</option>
+            <option value="facebook">Facebook</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="otro">Otro</option>
+          </select>
+          <select id="filtro-categoria"></select>
+          <select id="filtro-prioridad">
+            <option value="">Todas las prioridades</option>
+            <option value="P1-Critico">P1 Crítico</option>
+            <option value="P2-Alto">P2 Alto</option>
+            <option value="P3-Normal">P3 Normal</option>
+            <option value="P4-Menor">P4 Menor</option>
+          </select>
+          <input type="date" id="filtro-fecha-desde" title="Desde">
+          <input type="date" id="filtro-fecha-hasta" title="Hasta">
+        </div>
+
+        <div class="tabla-scroll">
+          <table class="tabla-tickets">
+            <thead>
+              <tr>
+                <th>ID</th><th>Origen</th><th>Remitente</th><th>Categoría</th>
+                <th>Prioridad</th><th>Estado</th><th>Fecha</th><th>SLA</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-tickets-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Panel de detalle de ticket (modal) -->
+      <div id="modal-detalle-ticket" class="modal-overlay oculto">
+        <div class="modal-box modal-box-grande">
+          <button id="cerrar-detalle-ticket" class="modal-cerrar">&times;</button>
+          <div id="detalle-ticket-contenido"></div>
+        </div>
+      </div>
+
+      <!-- ===================== MÓDULO 3: BUGS Y ESCALAMIENTOS ===================== -->
+      <section id="modulo-bugs" class="modulo oculto">
+        <div class="bloque-resumen" id="bugs-resumen"></div>
+        <div class="tabla-scroll">
+          <table class="tabla-bugs">
+            <thead>
+              <tr>
+                <th>Ticket</th><th>Motivo</th><th>Categoría</th><th>Días abierto</th>
+                <th>Estado TI</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-bugs-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== MÓDULO 4: BASE DE CONOCIMIENTO ===================== -->
+      <section id="modulo-conocimiento" class="modulo oculto">
+        <div class="filtros-barra">
+          <input type="text" id="conocimiento-busqueda" placeholder="Buscar por palabra clave...">
+          <button id="btn-nueva-entrada-conocimiento" class="btn btn-primario">
+            <i class="ti ti-plus"></i> Nueva entrada
+          </button>
+        </div>
+        <div id="lista-conocimiento" class="lista-conocimiento"></div>
+      </section>
+
+      <!-- Modal CRUD base de conocimiento -->
+      <div id="modal-conocimiento" class="modal-overlay oculto">
+        <div class="modal-box">
+          <button id="cerrar-modal-conocimiento" class="modal-cerrar">&times;</button>
+          <h3 id="modal-conocimiento-titulo">Nueva entrada</h3>
+          <form id="form-conocimiento" class="formulario">
+            <input type="hidden" id="conocimiento-id">
+            <div class="form-grupo form-grupo-ancho">
+              <label for="conocimiento-titulo-input">Título</label>
+              <input type="text" id="conocimiento-titulo-input" required>
+            </div>
+            <div class="form-grupo form-grupo-ancho">
+              <label for="conocimiento-categoria-input">Categoría</label>
+              <select id="conocimiento-categoria-input"></select>
+            </div>
+            <div class="form-grupo form-grupo-ancho">
+              <label for="conocimiento-problema-input">Problema</label>
+              <textarea id="conocimiento-problema-input" rows="3" required></textarea>
+            </div>
+            <div class="form-grupo form-grupo-ancho">
+              <label for="conocimiento-solucion-input">Solución paso a paso</label>
+              <textarea id="conocimiento-solucion-input" rows="6" required></textarea>
+            </div>
+            <div class="form-grupo form-grupo-ancho form-acciones">
+              <button type="submit" class="btn btn-primario">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ===================== MÓDULO 5: REPORTE SEMANAL ===================== -->
+      <section id="modulo-reporte" class="modulo oculto">
+        <div class="filtros-barra">
+          <label for="reporte-semana">Semana</label>
+          <input type="week" id="reporte-semana">
+        </div>
+
+        <div id="reporte-contenido">
+          <div class="bloque-reporte" id="reporte-bloque-1">
+            <h3>Métricas generales</h3>
+            <div class="metricas-grid" id="reporte-metricas-grid"></div>
+          </div>
+
+          <div class="bloque-reporte" id="reporte-bloque-2">
+            <h3>Distribución por origen</h3>
+            <div id="reporte-grafico-origen" class="grafico-barras"></div>
+          </div>
+
+          <div class="bloque-reporte" id="reporte-bloque-3">
+            <h3>Distribución por categoría</h3>
+            <div id="reporte-grafico-categoria" class="grafico-barras"></div>
+            <table class="tabla-reporte" id="reporte-tabla-categoria"></table>
+          </div>
+
+          <div class="bloque-reporte" id="reporte-bloque-4">
+            <h3>Escalamientos</h3>
+            <div id="reporte-escalamientos"></div>
+          </div>
+
+          <div class="bloque-reporte" id="reporte-bloque-5">
+            <h3>Bugs / incidentes técnicos</h3>
+            <div id="reporte-bugs"></div>
+          </div>
+
+          <div class="bloque-reporte" id="reporte-bloque-6">
+            <h3>Tendencia vs. semana anterior</h3>
+            <div id="reporte-tendencia"></div>
+          </div>
+
+          <div class="bloque-reporte" id="reporte-bloque-7">
+            <h3>Observaciones</h3>
+            <textarea id="reporte-observaciones" rows="4" placeholder="Agrega un comentario manual antes de exportar..."></textarea>
+          </div>
+        </div>
+
+        <div class="reporte-exportar">
+          <button id="btn-copiar-resumen" class="btn btn-secundario"><i class="ti ti-clipboard"></i> Copiar resumen texto</button>
+          <button id="btn-exportar-html" class="btn btn-secundario"><i class="ti ti-file-type-html"></i> Exportar HTML</button>
+          <button id="btn-exportar-json" class="btn btn-secundario"><i class="ti ti-file-type-json"></i> Exportar JSON</button>
+        </div>
+      </section>
+
+      <!-- ===================== MÓDULO 6: CONFIGURACIÓN ===================== -->
+      <section id="modulo-configuracion" class="modulo oculto">
+
+        <div class="config-seccion">
+          <h3>Identidad</h3>
+          <div class="form-grupo">
+            <label for="config-nombre-area">Nombre del área</label>
+            <input type="text" id="config-nombre-area">
+          </div>
+          <div class="form-grupo">
+            <label for="config-responsable">Nombre del responsable</label>
+            <input type="text" id="config-responsable">
+          </div>
+          <button id="btn-guardar-identidad" class="btn btn-primario">Guardar</button>
+        </div>
+
+        <div class="config-seccion">
+          <h3>Gmail API</h3>
+          <div id="config-gmail-estado" class="aviso-caja"></div>
+          <div class="form-grupo">
+            <label for="config-client-id">CLIENT_ID</label>
+            <input type="text" id="config-client-id">
+          </div>
+          <div class="form-grupo">
+            <label for="config-api-key">API_KEY</label>
+            <input type="text" id="config-api-key">
+          </div>
+          <button id="btn-guardar-credenciales" class="btn btn-primario">Guardar credenciales</button>
+          <button id="btn-conectar-gmail-config" class="btn btn-secundario">Conectar Gmail</button>
+          <button id="btn-desconectar-gmail" class="btn btn-peligro oculto">Desconectar</button>
+          <ol class="lista-instrucciones">
+            <li>Ir a <code>console.cloud.google.com</code></li>
+            <li>Crear proyecto nuevo</li>
+            <li>Habilitar Gmail API</li>
+            <li>Crear credencial OAuth 2.0 (tipo: aplicación web)</li>
+            <li>Agregar <code>http://localhost</code> como origen autorizado</li>
+            <li>Copiar CLIENT_ID y API_KEY aquí</li>
+          </ol>
+        </div>
+
+        <div class="config-seccion">
+          <h3>Filtros de Gmail (recomendados)</h3>
+          <div class="tabla-scroll">
+            <table class="tabla-filtros-gmail" id="config-tabla-filtros"></table>
+          </div>
+          <a href="https://mail.google.com/mail/u/0/#settings/filters" target="_blank" class="enlace">
+            Ir a configuración de filtros de Gmail →
+          </a>
+        </div>
+
+        <div class="config-seccion">
+          <h3>Filtros de descarte automático</h3>
+          <h4>Remitentes / dominios ignorados</h4>
+          <ul id="lista-remitentes-ignorados" class="lista-editable"></ul>
+          <div class="form-inline">
+            <input type="text" id="input-nuevo-remitente" placeholder="ej: @dominio.com">
+            <button id="btn-agregar-remitente" class="btn btn-secundario">Agregar</button>
+          </div>
+          <h4>Etiquetas Gmail ignoradas</h4>
+          <ul id="lista-etiquetas-ignoradas" class="lista-editable"></ul>
+          <div class="form-inline">
+            <input type="text" id="input-nueva-etiqueta-ignorada" placeholder="ej: Flow">
+            <button id="btn-agregar-etiqueta-ignorada" class="btn btn-secundario">Agregar</button>
+          </div>
+        </div>
+
+        <div class="config-seccion">
+          <h3>Log de descartados</h3>
+          <div class="tabla-scroll">
+            <table class="tabla-descartados">
+              <thead><tr><th>Fecha</th><th>Remitente</th><th>Asunto</th><th>Motivo</th><th>Acciones</th></tr></thead>
+              <tbody id="tabla-descartados-body"></tbody>
+            </table>
+          </div>
+          <button id="btn-limpiar-descartados" class="btn btn-peligro">Limpiar log de descartados</button>
+        </div>
+
+        <div class="config-seccion">
+          <h3>Datos</h3>
+          <button id="btn-exportar-backup" class="btn btn-secundario"><i class="ti ti-download"></i> Exportar todos los datos (JSON)</button>
+          <label for="input-importar-backup" class="btn btn-secundario">
+            <i class="ti ti-upload"></i> Importar datos desde JSON
+          </label>
+          <input type="file" id="input-importar-backup" accept=".json" class="oculto">
+          <button id="btn-limpiar-todo" class="btn btn-peligro">Limpiar todos los datos</button>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- LIBRERÍAS Y SCRIPTS -->
+<!-- ============================================================ -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<script src="data/plantillas.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/gmail.js"></script>
+<script src="js/tickets.js"></script>
+<script src="js/bugs.js"></script>
+<script src="js/conocimiento.js"></script>
+<script src="js/reporte.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
