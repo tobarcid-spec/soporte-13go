@@ -29,8 +29,8 @@ const FIREBASE_CONFIG = {
   appId:             '1:245633139950:web:e1a57d5a98a2862349dfff'
 };
 
-const EMAIL_AUTORIZADO = 'soporte13go@13.cl';
-const CLAVES_FIRESTORE = ['tickets', 'bugs_log', 'knowledge_base', 'config'];
+const EMAILS_AUTORIZADOS = ['soporte13go@13.cl', 'tobarcid@gmail.com'];
+const CLAVES_FIRESTORE   = ['tickets', 'bugs_log', 'knowledge_base', 'config'];
 
 let _db            = null;
 let _auth          = null;
@@ -53,9 +53,9 @@ function inicializarFirebase() {
   // Listener principal: dispara en login, logout y al restaurar sesión
   _auth.onAuthStateChanged(async (usuario) => {
     if (usuario) {
-      if (usuario.email !== EMAIL_AUTORIZADO) {
+      if (!EMAILS_AUTORIZADOS.includes(usuario.email)) {
         await _auth.signOut();
-        mostrarToast('Acceso no autorizado. Solo puede ingresar ' + EMAIL_AUTORIZADO, 'error');
+        mostrarToast('Acceso no autorizado: ' + usuario.email, 'error');
         return;
       }
       _usuarioActual = usuario;
@@ -75,7 +75,7 @@ function inicializarFirebase() {
 async function loginConGoogle() {
   if (!_auth) { mostrarToast('Firebase no inicializado', 'error'); return; }
   const proveedor = new firebase.auth.GoogleAuthProvider();
-  proveedor.setCustomParameters({ login_hint: EMAIL_AUTORIZADO });
+  proveedor.setCustomParameters({ login_hint: EMAILS_AUTORIZADOS[0] });
   try {
     await _auth.signInWithPopup(proveedor);
     // onAuthStateChanged maneja el resto
