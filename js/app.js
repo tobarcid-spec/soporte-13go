@@ -322,8 +322,13 @@ function onFirebaseConectado(email) {
   btnSidebar.classList.replace('btn-secundario', 'btn-peligro');
   btnSidebar.disabled = false;
 
+  // Si el wizard estaba visible (incógnito / navegador nuevo), ocultarlo
+  // ahora que los datos ya fueron descargados desde Firestore
+  mostrarWizardSiNecesario();
+
   renderizarConfiguracion();
   actualizarBadgesSidebar();
+  actualizarLogoSidebar();
   // Refresca vistas con los datos recién descargados de Firestore
   renderizarTablaTickets();
   renderizarModuloBugs();
