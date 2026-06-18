@@ -156,6 +156,22 @@ async function _subirClave(clave) {
 }
 
 // ============================================================
+// LIMPIAR TODOS LOS DATOS EN FIRESTORE
+// ============================================================
+
+async function limpiarDatosFirestore() {
+  if (!_db || !_usuarioActual) return;
+  try {
+    for (const clave of CLAVES_FIRESTORE) {
+      await _db.collection('datos').doc(clave).delete();
+    }
+    console.log('[Firebase] Datos eliminados de Firestore');
+  } catch (err) {
+    console.error('[Firebase] Error eliminando datos:', err);
+  }
+}
+
+// ============================================================
 // SINCRONIZACIÓN FORZADA
 // ============================================================
 

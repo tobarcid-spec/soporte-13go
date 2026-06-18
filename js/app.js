@@ -590,7 +590,10 @@ function inicializarModuloConfiguracion() {
           textoConfirmar: 'Eliminar todo',
           peligro: true,
           requierePalabra: 'CONFIRMAR',
-          onConfirmar: () => {
+          onConfirmar: async () => {
+            if (typeof limpiarDatosFirestore === 'function' && typeof firebaseConectado === 'function' && firebaseConectado()) {
+              await limpiarDatosFirestore();
+            }
             localStorage.clear();
             mostrarToast('Todos los datos fueron eliminados', 'aviso');
             setTimeout(() => location.reload(), 800);
