@@ -54,10 +54,16 @@ function leerLS(clave, valorPorDefecto) {
 
 function guardarLS(clave, valor) {
   localStorage.setItem(clave, JSON.stringify(valor));
-  // Si la clave es de las sincronizadas con Google Sheets, programar la subida.
+  // Sheets sync (legacy — requiere GCP)
   if (typeof CLAVES_SINCRONIZADAS !== 'undefined' && CLAVES_SINCRONIZADAS.includes(clave)
     && typeof programarSubidaASheet === 'function') {
     programarSubidaASheet(clave);
+  }
+  // Firebase sync (activo cuando hay sesión)
+  if (typeof CLAVES_FIRESTORE !== 'undefined' && CLAVES_FIRESTORE.includes(clave)
+    && typeof programarSubidaFirestore === 'function'
+    && typeof firebaseConectado === 'function' && firebaseConectado()) {
+    programarSubidaFirestore(clave);
   }
 }
 
@@ -286,30 +292,54 @@ function inicializarTabsNuevoCaso() {
 // ============================================================
 
 function onGmailConectado(email) {
-  document.getElementById('header-cuenta-gmail').classList.remove('oculto');
-  document.getElementById('header-cuenta-gmail-email').textContent = email;
-
-  const btnSidebar = document.getElementById('btn-conectar-gmail-sidebar');
-  btnSidebar.textContent = 'Gmail conectado';
-  btnSidebar.disabled = true;
-
   renderizarConfiguracion();
   cargarCorreosPendientes();
   if (typeof actualizarHeaderSync === 'function') actualizarHeaderSync();
 }
 
 function onGmailDesconectado() {
-  document.getElementById('header-cuenta-gmail').classList.add('oculto');
-  const btnSidebar = document.getElementById('btn-conectar-gmail-sidebar');
-  btnSidebar.innerHTML = '<i class="ti ti-mail"></i> Conectar Gmail';
-  btnSidebar.disabled = false;
-
   renderizarConfiguracion();
   cargarCorreosPendientes();
 }
 
 function onGmailTokenExpirado() {
   mostrarToast('Tu sesión de Gmail expiró. Reconéctate desde Configuración.', 'aviso');
+  renderizarConfiguracion();
+}
+
+// ============================================================
+// CALLBACKS DE FIREBASE (invocados desde js/firebase.js)
+// ============================================================
+
+function onFirebaseConectado(email) {
+  // Header
+  document.getElementById('header-cuenta-gmail').classList.remove('oculto');
+  document.getElementById('header-cuenta-gmail-email').textContent = email;
+
+  // Botón sidebar
+  const btnSidebar = document.getElementById('btn-conectar-gmail-sidebar');
+  btnSidebar.innerHTML = '<i class="ti ti-logout"></i> Cerrar sesión';
+  btnSidebar.classList.replace('btn-secundario', 'btn-peligro');
+  btnSidebar.disabled = false;
+
+  renderizarConfiguracion();
+  actualizarBadgesSidebar();
+  // Refresca vistas con los datos recién descargados de Firestore
+  renderizarTablaTickets();
+  renderizarModuloBugs();
+  renderizarListaConocimiento();
+}
+
+function onFirebaseDesconectado() {
+  // Header
+  document.getElementById('header-cuenta-gmail').classList.add('oculto');
+
+  // Botón sidebar
+  const btnSidebar = document.getElementById('btn-conectar-gmail-sidebar');
+  btnSidebar.innerHTML = '<i class="ti ti-brand-google"></i> Iniciar sesión';
+  btnSidebar.classList.replace('btn-peligro', 'btn-secundario');
+  btnSidebar.disabled = false;
+
   renderizarConfiguracion();
 }
 
@@ -332,12 +362,26 @@ function renderizarConfiguracion() {
   logoPreview.classList.toggle('oculto', !logo);
   btnQuitarLogo.classList.toggle('oculto', !logo);
 
+  // Estado de Firebase (cuenta principal)
+  const estadoFirebase = document.getElementById('config-firebase-estado');
+  if (estadoFirebase) {
+    const fbConectado = typeof firebaseConectado === 'function' && firebaseConectado();
+    estadoFirebase.className = 'aviso-caja ' + (fbConectado ? 'aviso-ok' : 'aviso-alerta');
+    estadoFirebase.innerHTML = fbConectado
+      ? `<i class="ti ti-cloud-check"></i><p>Conectado como <strong>${escaparHtml(obtenerEmailFirebase())}</strong>. Datos sincronizados en la nube.</p>`
+      : `<i class="ti ti-cloud-off"></i><p>Sin sesión. Inicia sesión con Google para sincronizar datos entre navegadores.</p>`;
+    document.getElementById('btn-login-firebase-config')?.classList.toggle('oculto', fbConectado);
+    document.getElementById('btn-logout-firebase-config')?.classList.toggle('oculto', !fbConectado);
+    document.getElementById('btn-forzar-sync-firebase')?.classList.toggle('oculto', !fbConectado);
+  }
+
+  // Estado de Gmail API (opcional, requiere GCP)
   const estadoDiv = document.getElementById('config-gmail-estado');
   const conectado = gmailConectado();
   estadoDiv.className = 'aviso-caja ' + (conectado ? 'aviso-ok' : 'aviso-alerta');
   estadoDiv.innerHTML = conectado
-    ? `<i class="ti ti-mail-check"></i><p>Conectado como <strong>${escaparHtml(obtenerEmailConectado())}</strong></p>`
-    : `<i class="ti ti-mail-off"></i><p>Gmail no está conectado.</p>`;
+    ? `<i class="ti ti-mail-check"></i><p>Gmail API conectado como <strong>${escaparHtml(obtenerEmailConectado())}</strong></p>`
+    : `<i class="ti ti-mail-off"></i><p>Gmail API no conectado. Requiere credenciales de Google Cloud Console.</p>`;
 
   document.getElementById('btn-conectar-gmail-config').classList.toggle('oculto', conectado);
   document.getElementById('btn-desconectar-gmail').classList.toggle('oculto', !conectado);
@@ -459,6 +503,12 @@ function inicializarModuloConfiguracion() {
     mostrarToast('Credenciales guardadas', 'exito');
   });
 
+  // Firebase Auth
+  document.getElementById('btn-login-firebase-config')?.addEventListener('click', loginConGoogle);
+  document.getElementById('btn-logout-firebase-config')?.addEventListener('click', logoutFirebase);
+  document.getElementById('btn-forzar-sync-firebase')?.addEventListener('click', forzarSyncFirestore);
+
+  // Gmail API (requiere GCP)
   document.getElementById('btn-conectar-gmail-config').addEventListener('click', conectarGmail);
   document.getElementById('btn-desconectar-gmail').addEventListener('click', desconectarGmail);
 
@@ -645,7 +695,13 @@ function inicializarWizard() {
 
 function inicializarBotonesGlobales() {
   document.getElementById('btn-sincronizar-gmail').addEventListener('click', syncGmail);
-  document.getElementById('btn-conectar-gmail-sidebar').addEventListener('click', conectarGmail);
+  document.getElementById('btn-conectar-gmail-sidebar').addEventListener('click', () => {
+    if (typeof firebaseConectado === 'function' && firebaseConectado()) {
+      logoutFirebase();
+    } else {
+      loginConGoogle();
+    }
+  });
   document.getElementById('cerrar-detalle-ticket').addEventListener('click', cerrarModalDetalle);
 }
 
@@ -654,7 +710,8 @@ function inicializarBotonesGlobales() {
 // ============================================================
 
 function inicializarApp() {
-  initAuth();
+  inicializarFirebase(); // Firebase Auth + Firestore (primario)
+  initAuth();            // Gmail OAuth (secundario — requiere GCP)
   mostrarWizardSiNecesario();
 
   // Se siembra antes que el formulario manual, que depende de estos datos

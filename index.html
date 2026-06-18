@@ -147,7 +147,7 @@
     </nav>
     <div class="sidebar-footer">
       <button id="btn-conectar-gmail-sidebar" class="btn btn-secundario btn-ancho-completo">
-        <i class="ti ti-mail"></i> Conectar Gmail
+        <i class="ti ti-brand-google"></i> Iniciar sesión
       </button>
     </div>
   </aside>
@@ -471,7 +471,25 @@
         </div>
 
         <div class="config-seccion">
-          <h3>Gmail API</h3>
+          <h3>Cuenta Google</h3>
+          <div id="config-firebase-estado" class="aviso-caja"></div>
+          <button id="btn-login-firebase-config" class="btn btn-primario oculto">
+            <i class="ti ti-brand-google"></i> Iniciar sesión con Google
+          </button>
+          <button id="btn-logout-firebase-config" class="btn btn-peligro oculto">
+            <i class="ti ti-logout"></i> Cerrar sesión
+          </button>
+          <button id="btn-forzar-sync-firebase" class="btn btn-secundario oculto">
+            <i class="ti ti-refresh"></i> Sincronizar ahora
+          </button>
+          <p class="texto-secundario texto-pequeno">
+            Inicia sesión con <strong>soporte13go@13.cl</strong> para guardar todos los datos en la nube
+            y acceder desde cualquier navegador o equipo.
+          </p>
+        </div>
+
+        <div class="config-seccion">
+          <h3>Gmail API <span class="texto-secundario texto-pequeno">(requiere Google Cloud)</span></h3>
           <div id="config-gmail-estado" class="aviso-caja"></div>
           <div class="form-grupo">
             <label for="config-client-id">CLIENT_ID</label>
@@ -568,9 +586,15 @@
 <!-- ============================================================ -->
 <!-- LIBRERÍAS Y SCRIPTS -->
 <!-- ============================================================ -->
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- Gmail OAuth (requiere GCP — opcional) -->
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script src="data/plantillas.js"></script>
+<script src="js/firebase.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/gmail.js"></script>
 <script src="js/sheets.js"></script>
