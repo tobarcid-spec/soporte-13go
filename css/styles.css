@@ -51,6 +51,73 @@ code {
 }
 
 /* ============================================================
+   PANTALLA DE LOGIN
+   ============================================================ */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--fondo-secundario);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.login-box {
+  background: var(--fondo-principal);
+  border: 1px solid var(--bordes);
+  border-radius: 12px;
+  padding: 48px 40px;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
+}
+
+.login-logo {
+  width: 64px;
+  height: 64px;
+  background: var(--azul-claro);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 32px;
+  color: var(--azul-acento);
+}
+
+.login-box h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  color: var(--texto-principal);
+}
+
+.login-box p {
+  margin: 0 0 28px;
+}
+
+.btn-login-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--bordes);
+  border-radius: 8px;
+  background: var(--fondo-principal);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  margin-bottom: 12px;
+}
+.btn-login-google:hover { background: var(--fondo-secundario); }
+
+.login-nota { margin: 0; }
+
+/* ============================================================
    BOTONES
    ============================================================ */
 .btn {

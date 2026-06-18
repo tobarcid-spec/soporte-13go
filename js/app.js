@@ -311,7 +311,19 @@ function onGmailTokenExpirado() {
 // CALLBACKS DE FIREBASE (invocados desde js/firebase.js)
 // ============================================================
 
+function mostrarPantallaLogin() {
+  document.getElementById('pantalla-login').classList.remove('oculto');
+  document.getElementById('app').classList.add('oculto');
+  document.getElementById('wizard').classList.add('oculto');
+}
+
+function ocultarPantallaLogin() {
+  document.getElementById('pantalla-login').classList.add('oculto');
+}
+
 function onFirebaseConectado(email) {
+  ocultarPantallaLogin();
+
   // Header
   document.getElementById('header-cuenta-gmail').classList.remove('oculto');
   document.getElementById('header-cuenta-gmail-email').textContent = email;
@@ -322,20 +334,20 @@ function onFirebaseConectado(email) {
   btnSidebar.classList.replace('btn-secundario', 'btn-peligro');
   btnSidebar.disabled = false;
 
-  // Si el wizard estaba visible (incógnito / navegador nuevo), ocultarlo
-  // ahora que los datos ya fueron descargados desde Firestore
+  // Mostrar app (wizard si es primera vez, app normal si ya está configurado)
   mostrarWizardSiNecesario();
 
   renderizarConfiguracion();
   actualizarBadgesSidebar();
   actualizarLogoSidebar();
-  // Refresca vistas con los datos recién descargados de Firestore
   renderizarTablaTickets();
   renderizarModuloBugs();
   renderizarListaConocimiento();
 }
 
 function onFirebaseDesconectado() {
+  mostrarPantallaLogin();
+
   // Header
   document.getElementById('header-cuenta-gmail').classList.add('oculto');
 
@@ -344,8 +356,6 @@ function onFirebaseDesconectado() {
   btnSidebar.innerHTML = '<i class="ti ti-brand-google"></i> Iniciar sesión';
   btnSidebar.classList.replace('btn-peligro', 'btn-secundario');
   btnSidebar.disabled = false;
-
-  renderizarConfiguracion();
 }
 
 // ============================================================
@@ -715,9 +725,13 @@ function inicializarBotonesGlobales() {
 // ============================================================
 
 function inicializarApp() {
+  // Mostrar pantalla de login mientras Firebase verifica la sesión
+  mostrarPantallaLogin();
+  document.getElementById('btn-login-google').addEventListener('click', loginConGoogle);
+
   inicializarFirebase(); // Firebase Auth + Firestore (primario)
   initAuth();            // Gmail OAuth (secundario — requiere GCP)
-  mostrarWizardSiNecesario();
+  // No llamar mostrarWizardSiNecesario() aquí — lo hace onFirebaseConectado
 
   // Se siembra antes que el formulario manual, que depende de estos datos
   // para poblar el combo de "Plantilla sugerida" por categoría.
