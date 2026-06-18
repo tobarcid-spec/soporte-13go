@@ -725,13 +725,14 @@ function inicializarBotonesGlobales() {
 // ============================================================
 
 function inicializarApp() {
-  // Mostrar pantalla de login mientras Firebase verifica la sesión
-  mostrarPantallaLogin();
+  // Mostrar spinner mientras Firebase verifica si hay sesión activa guardada.
+  // Solo si no hay sesión se mostrará la pantalla de login.
+  mostrarSpinner('Verificando sesión...');
   document.getElementById('btn-login-google').addEventListener('click', loginConGoogle);
 
   inicializarFirebase(); // Firebase Auth + Firestore (primario)
   initAuth();            // Gmail OAuth (secundario — requiere GCP)
-  // No llamar mostrarWizardSiNecesario() aquí — lo hace onFirebaseConectado
+  // mostrarWizardSiNecesario() lo llama onFirebaseConectado después del pull
 
   // Se siembra antes que el formulario manual, que depende de estos datos
   // para poblar el combo de "Plantilla sugerida" por categoría.

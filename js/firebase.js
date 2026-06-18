@@ -50,8 +50,11 @@ function inicializarFirebase() {
   _db   = firebase.firestore();
   _auth = firebase.auth();
 
-  // Listener principal: dispara en login, logout y al restaurar sesión
+  // Listener principal: dispara al iniciar (sesión guardada o no), login y logout.
+  // La primera llamada resuelve si hay sesión guardada — reemplaza al spinner.
   _auth.onAuthStateChanged(async (usuario) => {
+    if (typeof ocultarSpinner === 'function') ocultarSpinner();
+
     if (usuario) {
       if (!EMAILS_AUTORIZADOS.includes(usuario.email)) {
         await _auth.signOut();
@@ -62,6 +65,7 @@ function inicializarFirebase() {
       await descargarDatosDesdeFirestore();
       if (typeof onFirebaseConectado === 'function') onFirebaseConectado(usuario.email);
     } else {
+      // No hay sesión — mostrar pantalla de login
       _usuarioActual = null;
       if (typeof onFirebaseDesconectado === 'function') onFirebaseDesconectado();
     }
