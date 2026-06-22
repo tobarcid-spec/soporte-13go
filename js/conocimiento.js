@@ -11,7 +11,7 @@ function guardarBaseConocimiento(lista) {
 }
 
 function generarIdConocimiento() {
-  return 'K-' + Date.now().toString(36);
+  return 'K-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
 }
 
 /**
