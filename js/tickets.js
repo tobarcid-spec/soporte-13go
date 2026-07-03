@@ -109,9 +109,8 @@ function crearTicketManual(datos) {
     ticket.respuestaTexto = datos.plantillaTexto || '';
     ticket.fechaResolucion = ahora.toISOString();
   } else if (datos.tipoResolucion === 'manual') {
-    ticket.estado = 'resuelto';
+    ticket.estado = 'abierto'; // queda abierto hasta que se confirme el cierre
     ticket.respuestaTexto = datos.respuestaManual || '';
-    ticket.fechaResolucion = ahora.toISOString();
   } else if (datos.tipoResolucion === 'escalar') {
     ticket.estado = 'escalado';
     ticket.escalamiento = {
@@ -138,6 +137,19 @@ function crearTicketManual(datos) {
 // ============================================================
 // ACCIONES SOBRE TICKETS EXISTENTES
 // ============================================================
+
+async function reabrirTicket(id) {
+  const tickets = obtenerTickets();
+  const ticket = tickets.find(t => t.id === id);
+  if (!ticket) return;
+  ticket.estado = 'abierto';
+  ticket.fechaResolucion = null;
+  guardarTickets(tickets);
+  mostrarToast(`Ticket ${id} reabierto`, 'aviso');
+  renderizarTablaTickets();
+  actualizarBadgesSidebar();
+  abrirDetalleTicket(id);
+}
 
 async function marcarResuelto(id) {
   const tickets = obtenerTickets();
@@ -381,8 +393,9 @@ function abrirDetalleTicket(id) {
     ` : ''}
 
     <div class="detalle-acciones">
-      ${ticket.estado !== 'resuelto' ? `<button class="btn btn-primario" id="btn-detalle-resolver">Marcar resuelto</button>` : ''}
-      ${ticket.estado !== 'escalado' ? `<button class="btn btn-peligro" id="btn-detalle-escalar">Escalar a TI</button>` : ''}
+      ${!['resuelto', 'auto_respondido'].includes(ticket.estado) ? `<button class="btn btn-primario" id="btn-detalle-resolver">Marcar resuelto</button>` : ''}
+      ${ticket.estado !== 'escalado' && !['resuelto', 'auto_respondido'].includes(ticket.estado) ? `<button class="btn btn-peligro" id="btn-detalle-escalar">Escalar a TI</button>` : ''}
+      ${['resuelto', 'auto_respondido', 'escalado'].includes(ticket.estado) ? `<button class="btn btn-secundario" id="btn-detalle-reabrir">Reabrir ticket</button>` : ''}
     </div>
 
     <div id="detalle-bloque-escalar" class="oculto form-grupo form-grupo-ancho">
@@ -416,6 +429,7 @@ function abrirDetalleTicket(id) {
   document.getElementById('detalle-select-categoria')?.addEventListener('change', e => cambiarCategoriaTicket(id, e.target.value));
   document.getElementById('detalle-select-prioridad')?.addEventListener('change', e => cambiarPrioridadTicket(id, e.target.value));
   document.getElementById('btn-detalle-resolver')?.addEventListener('click', () => marcarResuelto(id));
+  document.getElementById('btn-detalle-reabrir')?.addEventListener('click', () => reabrirTicket(id));
   document.getElementById('btn-detalle-escalar')?.addEventListener('click', () => {
     document.getElementById('detalle-bloque-escalar').classList.remove('oculto');
   });
