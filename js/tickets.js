@@ -352,7 +352,10 @@ function abrirDetalleTicket(id) {
     <div class="detalle-grid">
       <div class="detalle-campo"><div class="etiqueta">Origen</div><div class="valor">${etiquetaOrigen(ticket.origen)}</div></div>
       <div class="detalle-campo"><div class="etiqueta">Remitente</div><div class="valor">${escaparHtml(ticket.remitente?.nombre || '')}</div></div>
-      <div class="detalle-campo"><div class="etiqueta">Fecha de ingreso</div><div class="valor">${formatearFecha(ticket.fechaIngreso)}</div></div>
+      <div class="detalle-campo">
+        <div class="etiqueta">Fecha de ingreso</div>
+        <input type="datetime-local" id="detalle-fecha-ingreso" value="${ticket.fechaIngreso ? ticket.fechaIngreso.slice(0,16) : ''}" style="font-size:13px;padding:4px 8px;border:1px solid var(--bordes);border-radius:6px;background:var(--fondo-principal);color:var(--texto-principal);">
+      </div>
       <div class="detalle-campo"><div class="etiqueta">SLA</div><div class="valor">${slaTexto}</div></div>
       <div class="detalle-campo">
         <div class="etiqueta">Categoría</div>
@@ -432,6 +435,16 @@ function abrirDetalleTicket(id) {
 
   document.getElementById('detalle-select-categoria')?.addEventListener('change', e => cambiarCategoriaTicket(id, e.target.value));
   document.getElementById('detalle-select-prioridad')?.addEventListener('change', e => cambiarPrioridadTicket(id, e.target.value));
+  document.getElementById('detalle-fecha-ingreso')?.addEventListener('change', e => {
+    if (!e.target.value) return;
+    const tickets = obtenerTickets();
+    const ticket = tickets.find(t => t.id === id);
+    if (!ticket) return;
+    ticket.fechaIngreso = new Date(e.target.value).toISOString();
+    guardarTickets(tickets);
+    mostrarToast('Fecha actualizada', 'exito');
+    renderizarTablaTickets();
+  });
   document.getElementById('btn-detalle-resolver')?.addEventListener('click', () => marcarResuelto(id));
   document.getElementById('btn-detalle-reabrir')?.addEventListener('click', () => reabrirTicket(id));
   document.getElementById('btn-detalle-escalar')?.addEventListener('click', () => {
