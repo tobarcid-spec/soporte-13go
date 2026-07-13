@@ -387,8 +387,12 @@ function abrirDetalleTicket(id) {
     ${ticket.escalamiento ? `
       <div class="aviso-caja aviso-peligro">
         <i class="ti ti-bug"></i>
-        <p><strong>Escalado a TI:</strong> ${escaparHtml(ticket.escalamiento.motivo)}
-        — Estado TI: ${ticket.escalamiento.estadoTI}</p>
+        <div>
+          <p style="margin:0 0 4px"><strong>Escalado a TI</strong> — Estado: ${ticket.escalamiento.estadoTI}</p>
+          <p style="margin:0 0 4px"><strong>Motivo:</strong> ${escaparHtml(ticket.escalamiento.motivo)}</p>
+          ${ticket.escalamiento.notaTI ? `<p style="margin:0"><strong>Nota para TI:</strong> ${escaparHtml(ticket.escalamiento.notaTI)}</p>` : ''}
+          <p style="margin:4px 0 0" class="texto-secundario texto-pequeno">Escalado el ${formatearFecha(ticket.escalamiento.fechaEscalamiento)}</p>
+        </div>
       </div>
     ` : ''}
 
