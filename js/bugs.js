@@ -167,6 +167,7 @@ function renderizarTablaBugs() {
     return `
       <tr data-ticket-id="${b.ticketId}" class="${alerta ? 'fila-alerta' : ''}">
         <td>${b.ticketId}</td>
+        <td>${escaparHtml(ticket?.remitente?.nombre || '—')}</td>
         <td>${escaparHtml(b.motivo)}</td>
         <td>${ticket ? formatearCategoria(ticket.categoria) : '—'}</td>
         <td>${alerta ? '<span class="texto-peligro">' : ''}${dias} día(s)${alerta ? '</span>' : ''}</td>
