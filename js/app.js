@@ -21,6 +21,7 @@ const CATEGORIA_LABELS = {
   samsung_lg: 'Samsung/LG',
   starlink: 'Starlink',
   suscripcion_general: 'Suscripción general',
+  problema_version_app: 'Problema versión App',
   sin_clasificar: 'Sin clasificar'
 };
 
@@ -36,7 +37,8 @@ const FILTROS_GMAIL_SUGERIDOS = [
   { etiqueta: 'Reembolso', palabras: 'reembolso, devolución, devolver dinero, reintegro' },
   { etiqueta: 'Samsung/LG', palabras: 'samsung, LG, televisor, smart tv' },
   { etiqueta: 'Starlink', palabras: 'starlink, satelital' },
-  { etiqueta: 'Caida de Firebase', palabras: 'no puedo entrar, caída, todos los usuarios, servicio caído' }
+  { etiqueta: 'Caida de Firebase', palabras: 'no puedo entrar, caída, todos los usuarios, servicio caído' },
+  { etiqueta: 'Problema versión App', palabras: 'versión, actualización, app desactualizada, no actualiza, versión antigua' }
 ];
 
 // ============================================================
