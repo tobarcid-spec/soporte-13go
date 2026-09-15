@@ -118,6 +118,28 @@ Saludos cordiales,
 Soporte 13GO`
   },
 
+  // PROBLEMA: Solicitud para carga o envío de nuevo contenido
+  solicitud_carga_contenido: {
+    categoria: 'carga_de_contenido',
+    etiqueta_gmail: 'Carga de contenido',
+    titulo: 'Solicitud de carga / envío de contenido',
+    texto: `Hola (Nombre),
+
+Gracias por escribirnos. Para solicitar la carga o la revisión de un contenido en la plataforma, por favor envíanos la siguiente información:
+
+- Título del contenido o enlace (si aplica).
+- Descripción breve del problema o del archivo a subir.
+- Plataforma/dispositivo donde se debe publicar (web, Smart TV, Android, iOS).
+- Archivo adjunto o enlace de descarga (si corresponde).
+
+Con estos antecedentes, nuestro equipo de contenidos podrá evaluar y procesar la carga. Te avisaremos cuando el contenido esté disponible o si necesitamos más información.
+
+Quedamos atentos a tu envío.
+
+Saludos cordiales,
+Equipo 13GO`
+  },
+
   // ============================================================
   // CATEGORÍA: GIFT CARD
   // Etiqueta Gmail: "Gift card"
@@ -524,6 +546,7 @@ const LABEL_MAP = {
   'Caida de Firebase':       { categoria: 'caida_firebase',         prioridad: 'P1-Critico' },
   'Clave y acceso':          { categoria: 'clave_y_acceso',         prioridad: 'P2-Alto'    },
   'Contenidos':              { categoria: 'contenidos',             prioridad: 'P3-Normal'  },
+  'Carga de contenido':      { categoria: 'carga_de_contenido',     prioridad: 'P3-Normal'  },
   'Cuentas corporativas':    { categoria: 'cuentas_corporativas',   prioridad: 'P2-Alto'    },
   'Dar de baja':             { categoria: 'dar_de_baja',            prioridad: 'P2-Alto'    },
   'Flow':                    { categoria: 'flow',                   prioridad: 'P3-Normal'  },
@@ -555,6 +578,7 @@ const PLANTILLA_POR_CATEGORIA = {
   reembolso:                'solicitud_reembolso',
   samsung_lg:               'samsung_lg_problema',
   starlink:                 'starlink_problema',
+  carga_de_contenido:       'solicitud_carga_contenido',
   caida_firebase:           'caida_firebase',
   suscripcion_general:      'nueva_suscripcion',
   sin_clasificar:           'pedir_mas_antecedentes'

@@ -84,7 +84,7 @@ function calcularMetricasGenerales(tickets) {
 }
 
 function distribucionPorOrigen(tickets) {
-  const canales = ['gmail', 'instagram', 'twitter', 'facebook', 'whatsapp', 'otro'];
+  const canales = ['gmail', 'instagram', 'twitter', 'facebook', 'whatsapp', 'aplicacion_13go', 'otro'];
   const total = tickets.length || 1;
   return canales.map(canal => {
     const cantidad = tickets.filter(t => t.origen === canal).length;
