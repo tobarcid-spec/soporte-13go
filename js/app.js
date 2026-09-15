@@ -603,18 +603,25 @@ function inicializarModuloConfiguracion() {
   document.getElementById('btn-exportar-backup').addEventListener('click', exportarBackupCompleto);
   document.getElementById('input-importar-backup').addEventListener('change', importarBackupCompleto);
 
-  // Botón para alternar modo demo: simplemente añade o quita ?demo=1 y recarga.
+  // Botón para alternar modo demo: pedir confirmación antes de recargar.
   const btnToggleDemo = document.getElementById('btn-toggle-demo');
   if (btnToggleDemo) {
     btnToggleDemo.addEventListener('click', () => {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('demo') === '1') {
-        params.delete('demo');
-      } else {
-        params.set('demo', '1');
-      }
-      const newSearch = params.toString();
-      window.location.search = newSearch ? ('?' + newSearch) : '';
+      const activar = new URLSearchParams(window.location.search).get('demo') !== '1';
+      mostrarConfirmacion({
+        titulo: activar ? 'Activar modo demo' : 'Desactivar modo demo',
+        mensaje: activar
+          ? 'El modo demo mostrará los valores por defecto y no leerá los datos guardados en este navegador. No se modificarán tus datos.'
+          : 'Se restaurará el comportamiento normal y se volverán a leer los datos desde este navegador.',
+        textoConfirmar: activar ? 'Activar' : 'Desactivar',
+        peligro: false,
+        onConfirmar: () => {
+          const params = new URLSearchParams(window.location.search);
+          if (activar) params.set('demo', '1'); else params.delete('demo');
+          const newSearch = params.toString();
+          window.location.search = newSearch ? ('?' + newSearch) : '';
+        }
+      });
     });
   }
 
