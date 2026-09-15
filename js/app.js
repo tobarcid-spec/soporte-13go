@@ -449,6 +449,16 @@ function renderizarConfiguracion() {
   });
 
   renderizarLogDescartados();
+
+  // Estado del modo demo (solo lectura, se controla por ?demo=1)
+  const demoEstado = document.getElementById('demo-estado');
+  const btnToggleDemo = document.getElementById('btn-toggle-demo');
+  if (demoEstado) {
+    demoEstado.textContent = DEMO_MODE ? 'Modo demo activo — ignorando datos locales' : 'Modo demo inactivo';
+  }
+  if (btnToggleDemo) {
+    btnToggleDemo.textContent = DEMO_MODE ? 'Desactivar modo demo' : 'Activar modo demo';
+  }
 }
 
 function renderizarListaEditable(ul, items, onEliminar) {
@@ -592,6 +602,21 @@ function inicializarModuloConfiguracion() {
 
   document.getElementById('btn-exportar-backup').addEventListener('click', exportarBackupCompleto);
   document.getElementById('input-importar-backup').addEventListener('change', importarBackupCompleto);
+
+  // Botón para alternar modo demo: simplemente añade o quita ?demo=1 y recarga.
+  const btnToggleDemo = document.getElementById('btn-toggle-demo');
+  if (btnToggleDemo) {
+    btnToggleDemo.addEventListener('click', () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('demo') === '1') {
+        params.delete('demo');
+      } else {
+        params.set('demo', '1');
+      }
+      const newSearch = params.toString();
+      window.location.search = newSearch ? ('?' + newSearch) : '';
+    });
+  }
 
   document.getElementById('btn-limpiar-todo').addEventListener('click', () => {
     mostrarConfirmacion({
