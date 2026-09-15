@@ -21,6 +21,7 @@ Archivos modificados
 
 - `data/plantillas.js` — nuevas plantillas y mappings.
 - `js/app.js` — `CATEGORIA_LABELS`, `FILTROS_GMAIL_SUGERIDOS` y helper `opcionesCategorias` siguen gestionando la nueva categoría.
+ - `js/app.js` — añadido `?demo=1` (modo demo) que muestra la app sin leer datos guardados en `localStorage` para facilitar demostraciones.
 - `index.html` — select de canales actualizado.
 - `js/reporte.js` — reportes incluyen `aplicacion_13go`.
 

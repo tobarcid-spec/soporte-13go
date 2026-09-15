@@ -44,11 +44,23 @@ const FILTROS_GMAIL_SUGERIDOS = [
 ];
 
 // ============================================================
+// MODO DEMO
+// Activar agregando `?demo=1` a la URL. En modo demo la app
+// ignora ciertas claves de `localStorage` para mostrar los
+// valores por defecto (útil para QA y demostraciones públicas).
+// ============================================================
+const DEMO_MODE = (typeof window !== 'undefined') && new URLSearchParams(window.location.search).get('demo') === '1';
+const DEMO_KEYS = new Set(['tickets', 'correos_descartados', 'bugs_log', 'knowledge_base', 'config', 'gmail_label_ids', 'sync_log', 'filtros_descarte', 'sheet_id', 'logo_empresa']);
+
+// ============================================================
 // PERSISTENCIA GENÉRICA (localStorage + JSON)
 // ============================================================
 
 function leerLS(clave, valorPorDefecto) {
   try {
+    // Si estamos en modo demo y la clave está en la lista de demo,
+    // no leemos localStorage para forzar los valores por defecto.
+    if (DEMO_MODE && DEMO_KEYS.has(clave)) return valorPorDefecto;
     const crudo = localStorage.getItem(clave);
     return crudo === null ? valorPorDefecto : JSON.parse(crudo);
   } catch {
