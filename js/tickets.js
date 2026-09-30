@@ -353,6 +353,10 @@ function abrirDetalleTicket(id) {
       <div class="detalle-campo"><div class="etiqueta">Origen</div><div class="valor">${etiquetaOrigen(ticket.origen)}</div></div>
       <div class="detalle-campo"><div class="etiqueta">Remitente</div><div class="valor">${escaparHtml(ticket.remitente?.nombre || '')}</div></div>
       <div class="detalle-campo">
+        <div class="etiqueta">Correo</div>
+        <input type="email" id="detalle-correo" value="${escaparHtml(ticket.remitente?.email || '')}" placeholder="correo@ejemplo.com" style="font-size:13px;padding:4px 8px;border:1px solid var(--bordes);border-radius:6px;background:var(--fondo-principal);color:var(--texto-principal);">
+      </div>
+      <div class="detalle-campo">
         <div class="etiqueta">Fecha de ingreso</div>
         <input type="datetime-local" id="detalle-fecha-ingreso" value="${ticket.fechaIngreso ? ticket.fechaIngreso.slice(0,16) : ''}" style="font-size:13px;padding:4px 8px;border:1px solid var(--bordes);border-radius:6px;background:var(--fondo-principal);color:var(--texto-principal);">
       </div>
@@ -435,6 +439,19 @@ function abrirDetalleTicket(id) {
 
   document.getElementById('detalle-select-categoria')?.addEventListener('change', e => cambiarCategoriaTicket(id, e.target.value));
   document.getElementById('detalle-select-prioridad')?.addEventListener('change', e => cambiarPrioridadTicket(id, e.target.value));
+  document.getElementById('detalle-correo')?.addEventListener('change', e => {
+    const correo = e.target.value.trim();
+    if (correo && !e.target.checkValidity()) {
+      mostrarToast('Correo no válido', 'error');
+      return;
+    }
+    const tickets = obtenerTickets();
+    const ticket = tickets.find(t => t.id === id);
+    if (!ticket) return;
+    ticket.remitente = { ...(ticket.remitente || {}), email: correo };
+    guardarTickets(tickets);
+    mostrarToast('Correo actualizado', 'exito');
+  });
   document.getElementById('detalle-fecha-ingreso')?.addEventListener('change', e => {
     if (!e.target.value) return;
     const tickets = obtenerTickets();
