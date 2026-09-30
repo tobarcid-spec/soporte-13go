@@ -351,7 +351,10 @@ function abrirDetalleTicket(id) {
     <h3>${ticket.id} — ${etiquetaEstado(ticket.estado)}</h3>
     <div class="detalle-grid">
       <div class="detalle-campo"><div class="etiqueta">Origen</div><div class="valor">${etiquetaOrigen(ticket.origen)}</div></div>
-      <div class="detalle-campo"><div class="etiqueta">Remitente</div><div class="valor">${escaparHtml(ticket.remitente?.nombre || '')}</div></div>
+      <div class="detalle-campo">
+        <div class="etiqueta">Remitente</div>
+        <input type="text" id="detalle-remitente" value="${escaparHtml(ticket.remitente?.nombre || '')}" style="font-size:13px;padding:4px 8px;border:1px solid var(--bordes);border-radius:6px;background:var(--fondo-principal);color:var(--texto-principal);">
+      </div>
       <div class="detalle-campo">
         <div class="etiqueta">Correo</div>
         <input type="email" id="detalle-correo" value="${escaparHtml(ticket.remitente?.email || '')}" placeholder="correo@ejemplo.com" style="font-size:13px;padding:4px 8px;border:1px solid var(--bordes);border-radius:6px;background:var(--fondo-principal);color:var(--texto-principal);">
@@ -439,6 +442,17 @@ function abrirDetalleTicket(id) {
 
   document.getElementById('detalle-select-categoria')?.addEventListener('change', e => cambiarCategoriaTicket(id, e.target.value));
   document.getElementById('detalle-select-prioridad')?.addEventListener('change', e => cambiarPrioridadTicket(id, e.target.value));
+  document.getElementById('detalle-remitente')?.addEventListener('change', e => {
+    const nombre = e.target.value.trim();
+    if (!nombre) return;
+    const tickets = obtenerTickets();
+    const ticket = tickets.find(t => t.id === id);
+    if (!ticket) return;
+    ticket.remitente = { ...(ticket.remitente || {}), nombre };
+    guardarTickets(tickets);
+    mostrarToast('Remitente actualizado', 'exito');
+    renderizarTablaTickets();
+  });
   document.getElementById('detalle-correo')?.addEventListener('change', e => {
     const correo = e.target.value.trim();
     if (correo && !e.target.checkValidity()) {
