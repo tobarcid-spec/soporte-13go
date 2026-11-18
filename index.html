@@ -528,6 +528,30 @@
         </div>
 
         <div class="config-seccion">
+          <h3>Gmail vía Apps Script <span class="texto-secundario texto-pequeno">(sin Google Cloud ni administrador)</span></h3>
+          <div id="config-script-estado" class="aviso-caja"></div>
+          <div class="form-grupo">
+            <label for="config-script-url">URL de la aplicación web (termina en /exec)</label>
+            <input type="text" id="config-script-url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+          </div>
+          <div class="form-grupo">
+            <label for="config-script-token">Token</label>
+            <input type="password" id="config-script-token" autocomplete="off">
+            <p class="texto-secundario texto-pequeno">Se guarda solo en este navegador (no se sincroniza a la nube).</p>
+          </div>
+          <button id="btn-guardar-script" class="btn btn-primario">Guardar y probar conexión</button>
+          <button id="btn-desconectar-script" class="btn btn-peligro oculto">Desconectar</button>
+          <ol class="lista-instrucciones">
+            <li>Entra a <code>script.google.com</code> con la cuenta de soporte → Nuevo proyecto</li>
+            <li>Pega el contenido de <code>apps-script/Code.gs</code> (está en el repositorio)</li>
+            <li>Cambia <code>TOKEN</code> en el script por una clave larga y aleatoria</li>
+            <li>Implementar → Nueva implementación → Aplicación web → Ejecutar como <strong>Yo</strong>, acceso <strong>Cualquier usuario</strong></li>
+            <li>Acepta los permisos de Gmail (es tu propio script)</li>
+            <li>Copia la URL <code>/exec</code> y el mismo token en los campos de arriba</li>
+          </ol>
+        </div>
+
+        <div class="config-seccion">
           <h3>Gmail API <span class="texto-secundario texto-pequeno">(requiere Google Cloud)</span></h3>
           <div id="config-gmail-estado" class="aviso-caja"></div>
           <div class="form-grupo">
@@ -646,6 +670,7 @@
 <script src="js/firebase.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/gmail.js"></script>
+<script src="js/gmail-script.js"></script>
 <script src="js/sheets.js"></script>
 <script src="js/tickets.js"></script>
 <script src="js/bugs.js"></script>

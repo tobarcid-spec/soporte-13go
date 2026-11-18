@@ -23,7 +23,7 @@ const temporizadoresSubida = {};
 
 /** true si hay sesión de Google vigente y ya se identificó la planilla a usar. */
 function sheetsConectado() {
-  return gmailConectado() && !!obtenerSheetId();
+  return tokenValido() && !!obtenerSheetId(); // Sheets requiere OAuth (no funciona vía Apps Script)
 }
 
 function obtenerSheetId() {
@@ -51,7 +51,7 @@ function urlHojaDatos() {
  * descarga su contenido y sobrescribe la caché local.
  */
 async function inicializarSincronizacionSheets() {
-  if (!gmailConectado()) return;
+  if (!tokenValido()) return;
 
   try {
     let id = obtenerSheetId();

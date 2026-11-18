@@ -48,7 +48,7 @@ function debeIgnorar(correo) {
 
 /** Carga desde la API los IDs reales de las etiquetas y los guarda en localStorage. */
 async function cargarIdsEtiquetas() {
-  if (!gmailConectado()) return;
+  if (!tokenValido()) return; // solo aplica a la API OAuth; el puente Apps Script usa nombres
   try {
     const res = await gapi.client.gmail.users.labels.list({ userId: 'me' });
     const ids = {};
@@ -72,6 +72,15 @@ function obtenerMapaIdANombreEtiqueta() {
  * Solo se debe llamar si el ticket tiene messageId (viene de Gmail).
  */
 async function actualizarEtiquetaGmail(messageId, nuevoEstado) {
+  if (usarScriptGmail()) {
+    try {
+      await llamarScript('etiquetar', { messageId, estado: nuevoEstado });
+    } catch (err) {
+      console.error('No se pudo actualizar la etiqueta vía Apps Script', err);
+      mostrarToast('No se pudo actualizar la etiqueta en Gmail, pero el ticket sí se actualizó', 'aviso');
+    }
+    return;
+  }
   if (!gmailConectado()) return;
   const ids = leerLS('gmail_label_ids', {});
 
@@ -124,6 +133,11 @@ function parsearRemitente(headerFrom) {
 
 /** Obtiene los últimos `maxResults` correos sin leer del inbox, ya parseados. */
 async function obtenerCorreosCrudos(maxResults = 50) {
+  if (usarScriptGmail()) {
+    const r = await llamarScript('correos', { max: maxResults });
+    return (r.correos || []).map(c => ({ ...c, remitente: parsearRemitente(c.from) }));
+  }
+
   const lista = await gapi.client.gmail.users.messages.list({
     userId: 'me',
     labelIds: ['INBOX'],

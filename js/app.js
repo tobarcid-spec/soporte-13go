@@ -410,7 +410,21 @@ function renderizarConfiguracion() {
 
   // Estado de Gmail API (opcional, requiere GCP)
   const estadoDiv = document.getElementById('config-gmail-estado');
-  const conectado = gmailConectado();
+  const conectado = tokenValido(); // solo OAuth; el puente Apps Script tiene su propia sección
+
+  // Estado de Gmail vía Apps Script (sin Google Cloud)
+  const estadoScript = document.getElementById('config-script-estado');
+  if (estadoScript) {
+    const cfgScript = obtenerConfigScript();
+    const scriptActivo = modoScriptActivo();
+    estadoScript.className = 'aviso-caja ' + (scriptActivo ? 'aviso-ok' : 'aviso-alerta');
+    estadoScript.innerHTML = scriptActivo
+      ? `<i class="ti ti-mail-check"></i><p>Gmail conectado vía Apps Script${cfgScript.email ? ` como <strong>${escaparHtml(cfgScript.email)}</strong>` : ''}.</p>`
+      : `<i class="ti ti-mail-off"></i><p>Sin conectar. Sigue los pasos de abajo para crear el script en tu cuenta.</p>`;
+    document.getElementById('config-script-url').value = cfgScript.url || '';
+    document.getElementById('config-script-token').value = cfgScript.token || '';
+    document.getElementById('btn-desconectar-script').classList.toggle('oculto', !scriptActivo);
+  }
   estadoDiv.className = 'aviso-caja ' + (conectado ? 'aviso-ok' : 'aviso-alerta');
   estadoDiv.innerHTML = conectado
     ? `<i class="ti ti-mail-check"></i><p>Gmail API conectado como <strong>${escaparHtml(obtenerEmailConectado())}</strong></p>`
@@ -550,6 +564,15 @@ function inicializarModuloConfiguracion() {
   document.getElementById('btn-login-firebase-config')?.addEventListener('click', loginConGoogle);
   document.getElementById('btn-logout-firebase-config')?.addEventListener('click', logoutFirebase);
   document.getElementById('btn-forzar-sync-firebase')?.addEventListener('click', forzarSyncFirestore);
+
+  // Gmail vía Apps Script (sin GCP)
+  document.getElementById('btn-guardar-script').addEventListener('click', () => {
+    conectarGmailScript(
+      document.getElementById('config-script-url').value,
+      document.getElementById('config-script-token').value
+    );
+  });
+  document.getElementById('btn-desconectar-script').addEventListener('click', desconectarGmailScript);
 
   // Gmail API (requiere GCP)
   document.getElementById('btn-conectar-gmail-config').addEventListener('click', conectarGmail);

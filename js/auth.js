@@ -212,11 +212,13 @@ function tokenValido(token) {
 
 /** true si actualmente hay una sesión de Gmail activa y vigente. */
 function gmailConectado() {
-  return tokenValido();
+  // OAuth vigente, o puente Apps Script configurado (js/gmail-script.js)
+  return tokenValido() || (typeof modoScriptActivo === 'function' && modoScriptActivo());
 }
 
 /** Devuelve el email de la cuenta conectada, o '' si no hay sesión. */
 function obtenerEmailConectado() {
   const token = obtenerTokenGuardado();
-  return token ? (token.email || '') : '';
+  if (token && tokenValido(token)) return token.email || '';
+  return (typeof obtenerConfigScript === 'function' && obtenerConfigScript().email) || '';
 }
