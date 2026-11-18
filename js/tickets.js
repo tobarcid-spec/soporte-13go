@@ -48,6 +48,8 @@ function crearTicketDesdeGmail(correo, categoria, prioridad, silencioso = false)
     id: generarIdTicket(),
     origen: 'gmail',
     messageId: correo.messageId,
+    threadId: correo.threadId || null,   // para enlazar respuestas posteriores del cliente
+    mensajesVinculados: [],              // IDs de respuestas ya incorporadas a este ticket
     fechaIngreso: correo.fecha,
     remitente: correo.remitente,
     asunto: correo.asunto,

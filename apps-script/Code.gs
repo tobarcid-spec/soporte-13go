@@ -82,6 +82,7 @@ function listarCorreos(max) {
       if (!m.isUnread()) return;
       correos.push({
         messageId: m.getId(),
+        threadId: hilo.getId(),
         fecha: m.getDate().toISOString(),
         from: m.getFrom(),
         asunto: m.getSubject() || '(sin asunto)',

@@ -113,8 +113,16 @@ async function actualizarEtiquetaGmail(messageId, nuevoEstado) {
 // ============================================================
 
 /** Asigna categoría/prioridad interna según la etiqueta de Gmail (LABEL_MAP). */
+// Etiquetas de ESTADO (no de categoría). Cuando un hilo ya fue atendido conserva
+// "Resuelto"/"Pendiente" junto a su categoría; estas no deben ganarle a la categoría.
+const ETIQUETAS_DE_ESTADO = ['Pendiente', 'Resuelto', 'Resuelto por el usuario', 'Sin respuesta de usuario'];
+
 function clasificarPorEtiquetas(nombresEtiquetas) {
-  for (const nombre of nombresEtiquetas) {
+  const ordenadas = [
+    ...nombresEtiquetas.filter(n => !ETIQUETAS_DE_ESTADO.includes(n)),
+    ...nombresEtiquetas.filter(n => ETIQUETAS_DE_ESTADO.includes(n))
+  ];
+  for (const nombre of ordenadas) {
     if (LABEL_MAP[nombre]) {
       return { etiquetaGmail: nombre, ...LABEL_MAP[nombre] };
     }
@@ -131,10 +139,16 @@ function parsearRemitente(headerFrom) {
   return { nombre: headerFrom || '', email: headerFrom || '' };
 }
 
+let avisoScriptDesactualizado = false;
+
 /** Obtiene los últimos `maxResults` correos sin leer del inbox, ya parseados. */
 async function obtenerCorreosCrudos(maxResults = 50) {
   if (usarScriptGmail()) {
     const r = await llamarScript('correos', { max: maxResults });
+    if (r.correos && r.correos.length && !r.correos[0].threadId && !avisoScriptDesactualizado) {
+      avisoScriptDesactualizado = true;
+      mostrarToast('Actualiza el script de Apps Script (nueva versión de Code.gs) para enlazar las respuestas de un mismo cliente al ticket existente', 'aviso');
+    }
     return (r.correos || []).map(c => ({ ...c, remitente: parsearRemitente(c.from) }));
   }
 
@@ -166,6 +180,7 @@ async function obtenerCorreosCrudos(maxResults = 50) {
 
     correos.push({
       messageId: m.id,
+      threadId: detalle.result.threadId,
       fecha: new Date(parseInt(detalle.result.internalDate, 10)).toISOString(),
       from,
       remitente: parsearRemitente(from),
@@ -183,8 +198,12 @@ async function obtenerCorreosCrudos(maxResults = 50) {
  * (registrándolos en el log), los que ya tienen ticket y los ya descartados.
  * Devuelve solo los correos "pendientes" de acción.
  */
+// Resultado de la última pasada: cuántas respuestas se enlazaron a tickets existentes.
+let ultimaVinculacion = { vinculados: 0, reabiertos: 0 };
+
 function filtrarCorreosPendientes(correos) {
   const pendientes = [];
+  ultimaVinculacion = { vinculados: 0, reabiertos: 0 };
 
   correos.forEach(correo => {
     if (yaExisteTicketGmail(correo.messageId)) return;
@@ -195,6 +214,15 @@ function filtrarCorreosPendientes(correos) {
       return;
     }
 
+    // Respuesta de una conversación que ya tiene ticket: no crea uno nuevo
+    const ticketExistente = buscarTicketPorHilo(correo.threadId);
+    if (ticketExistente) {
+      const reabierto = vincularRespuestaATicket(ticketExistente.id, correo);
+      ultimaVinculacion.vinculados++;
+      if (reabierto) ultimaVinculacion.reabiertos++;
+      return;
+    }
+
     pendientes.push(correo);
   });
 
@@ -202,7 +230,63 @@ function filtrarCorreosPendientes(correos) {
 }
 
 function yaExisteTicketGmail(messageId) {
-  return obtenerTickets().some(t => t.messageId === messageId);
+  return obtenerTickets().some(t =>
+    t.messageId === messageId || (t.mensajesVinculados || []).includes(messageId));
+}
+
+/** Ticket más reciente de una conversación de Gmail (null si no hay o no se conoce el hilo). */
+function buscarTicketPorHilo(threadId) {
+  if (!threadId) return null;
+  return obtenerTickets()
+    .filter(t => t.threadId === threadId)
+    .sort((a, b) => new Date(b.fechaIngreso) - new Date(a.fechaIngreso))[0] || null;
+}
+
+/**
+ * Incorpora una respuesta del cliente a su ticket: la deja como nota, marca el
+ * ticket como "sin revisar" y lo REABRE si estaba resuelto o auto-respondido.
+ * Si está abierto o escalado a TI solo agrega la nota (el escalamiento sigue su curso).
+ * Devuelve true si el ticket fue reabierto.
+ */
+function vincularRespuestaATicket(ticketId, correo) {
+  const tickets = obtenerTickets();
+  const ticket = tickets.find(t => t.id === ticketId);
+  if (!ticket) return false;
+
+  const estabaCerrado = ESTADOS_RESUELTOS.includes(ticket.estado);
+  ticket.mensajesVinculados = ticket.mensajesVinculados || [];
+  ticket.mensajesVinculados.push(correo.messageId);
+  ticket.notas = ticket.notas || [];
+  ticket.notas.push({
+    texto: `Respuesta del cliente por correo${correo.asunto ? ` («${correo.asunto}»)` : ''}: ${correo.snippet || '(sin texto)'}`,
+    fecha: correo.fecha || new Date().toISOString()
+  });
+  ticket.requiereRevision = true;
+
+  if (estabaCerrado) {
+    ticket.estado = 'abierto';
+    ticket.fechaResolucion = null;
+    ticket.reaperturas = (ticket.reaperturas || 0) + 1;
+    ticket.notas.push({ texto: 'Ticket reabierto automáticamente por respuesta del cliente.', fecha: new Date().toISOString() });
+  }
+  guardarTickets(tickets);
+
+  // Deja el hilo en "Pendiente" en Gmail (quita "Resuelto")
+  if (estabaCerrado) actualizarEtiquetaGmail(correo.messageId, 'abierto');
+  return estabaCerrado;
+}
+
+/** Aviso al usuario con lo que pasó con las respuestas enlazadas y refresca las vistas. */
+function notificarVinculacion() {
+  const { vinculados, reabiertos } = ultimaVinculacion;
+  if (vinculados === 0) return;
+  mostrarToast(
+    `${vinculados} respuesta(s) de clientes agregadas a tickets existentes` +
+    (reabiertos ? ` — ${reabiertos} reabierto(s)` : ''),
+    reabiertos ? 'aviso' : 'exito'
+  );
+  renderizarTablaTickets();
+  actualizarBadgesSidebar();
 }
 
 function yaDescartado(messageId) {
@@ -277,6 +361,7 @@ async function cargarCorreosPendientes() {
   try {
     const crudos = await obtenerCorreosCrudos(50);
     correosPendientesCache = filtrarCorreosPendientes(crudos);
+    notificarVinculacion();
     renderizarListaCorreosGmail();
     renderizarLogDescartados();
   } catch (err) {
@@ -375,9 +460,19 @@ async function syncGmail() {
   try {
     const crudos = await obtenerCorreosCrudos(50);
     const pendientes = filtrarCorreosPendientes(crudos);
+    const { vinculados, reabiertos } = ultimaVinculacion;
 
     let importados = 0;
-    pendientes.forEach(correo => {
+    let vinculadosEnLote = 0;
+    // Del más antiguo al más nuevo: el primer correo de una conversación crea el ticket
+    // y los siguientes del mismo lote se agregan a ese ticket como respuestas.
+    pendientes.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).forEach(correo => {
+      const existente = buscarTicketPorHilo(correo.threadId);
+      if (existente) {
+        vincularRespuestaATicket(existente.id, correo);
+        vinculadosEnLote++;
+        return;
+      }
       const clasificacion = clasificarPorEtiquetas(correo.labels);
       crearTicketDesdeGmail(correo, clasificacion.categoria, clasificacion.prioridad, true);
       importados++;
@@ -388,7 +483,12 @@ async function syncGmail() {
       totalImportados: importados
     });
 
-    mostrarToast(`Sincronización completa: ${importados} ticket(s) nuevo(s) importado(s)`, 'exito');
+    mostrarToast(
+      `Sincronización completa: ${importados} ticket(s) nuevo(s)` +
+      (vinculados + vinculadosEnLote ? `, ${vinculados + vinculadosEnLote} respuesta(s) agregadas a tickets existentes` : '') +
+      (reabiertos ? ` (${reabiertos} reabierto(s))` : ''),
+      'exito'
+    );
     actualizarHeaderSync();
     cargarCorreosPendientes();
     renderizarTablaTickets();
