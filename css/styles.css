@@ -515,6 +515,37 @@ tbody tr:last-child td { border-bottom: none; }
 }
 
 /* ============================================================
+   DASHBOARD
+   ============================================================ */
+.dash-svg { width: 100%; height: auto; display: block; }
+.dash-guia { stroke: var(--bordes); stroke-width: 1; }
+.dash-texto { fill: var(--texto-secundario); font-size: 11px; }
+.dash-valor { fill: var(--texto-principal); font-size: 11px; font-weight: 600; }
+.dash-barra { fill: var(--azul-acento); }
+.dash-barra-parcial { fill: var(--azul-acento); opacity: 0.35; }
+.dash-tendencia { stroke: var(--naranja); stroke-width: 2; stroke-dasharray: 6 4; }
+.dash-spark { width: 110px; height: 26px; display: block; }
+.dash-spark polyline { fill: none; stroke: var(--azul-acento); stroke-width: 1.5; }
+.dash-spark circle { fill: var(--azul-acento); }
+.dash-celda-barra { width: 22%; }
+.dash-celda-barra .barra-pista { background: var(--fondo-secundario); border-radius: 4px; height: 12px; overflow: hidden; }
+.dash-celda-barra .barra-relleno { height: 100%; background: var(--azul-acento); }
+
+.hallazgo {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 10px 14px; margin-bottom: 8px;
+  border-radius: 6px; border-left: 4px solid var(--azul-acento);
+  background: var(--azul-claro);
+}
+.hallazgo > i { font-size: 20px; margin-top: 1px; color: var(--azul-acento); }
+.hallazgo-titulo { font-weight: 600; }
+.hallazgo-detalle { font-size: 13px; color: var(--texto-secundario); margin-top: 2px; }
+.hallazgo-alerta { background: var(--rojo-claro); border-left-color: var(--rojo-alerta); }
+.hallazgo-alerta > i { color: var(--rojo-alerta); }
+.hallazgo-aviso { background: var(--amarillo-claro); border-left-color: var(--amarillo-aviso); }
+.hallazgo-aviso > i { color: var(--amarillo-aviso); }
+
+/* ============================================================
    CONFIGURACIÓN
    ============================================================ */
 .config-seccion {

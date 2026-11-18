@@ -161,6 +161,9 @@
       <button class="nav-item" data-modulo="conocimiento">
         <i class="ti ti-book"></i><span>Base de conocimiento</span>
       </button>
+      <button class="nav-item" data-modulo="dashboard">
+        <i class="ti ti-layout-dashboard"></i><span>Dashboard</span>
+      </button>
       <button class="nav-item" data-modulo="reporte">
         <i class="ti ti-chart-bar"></i><span>Reporte semanal</span>
       </button>
@@ -417,6 +420,18 @@
         </div>
       </div>
 
+      <!-- ===================== MÓDULO: DASHBOARD ===================== -->
+      <section id="modulo-dashboard" class="modulo oculto">
+        <div class="filtros-barra">
+          <label for="dashboard-granularidad">Agrupar por</label>
+          <select id="dashboard-granularidad">
+            <option value="semana">Semana</option>
+            <option value="mes">Mes</option>
+          </select>
+        </div>
+        <div id="dashboard-contenido"></div>
+      </section>
+
       <!-- ===================== MÓDULO 5: REPORTE SEMANAL ===================== -->
       <section id="modulo-reporte" class="modulo oculto">
         <div class="filtros-barra">
@@ -636,6 +651,7 @@
 <script src="js/bugs.js"></script>
 <script src="js/conocimiento.js"></script>
 <script src="js/reporte.js"></script>
+<script src="js/dashboard.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

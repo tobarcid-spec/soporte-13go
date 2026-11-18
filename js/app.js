@@ -262,6 +262,7 @@ const TITULOS_MODULO = {
   'casos-activos': 'Casos activos',
   'bugs': 'Bugs y escalamientos',
   'conocimiento': 'Base de conocimiento',
+  'dashboard': 'Dashboard',
   'reporte': 'Reporte semanal',
   'configuracion': 'Configuración'
 };
@@ -279,6 +280,7 @@ function cambiarModulo(nombre) {
   if (nombre === 'casos-activos') renderizarTablaTickets();
   if (nombre === 'bugs') renderizarModuloBugs();
   if (nombre === 'conocimiento') renderizarListaConocimiento();
+  if (nombre === 'dashboard') renderizarDashboard();
   if (nombre === 'reporte') renderizarReporte();
   if (nombre === 'configuracion') renderizarConfiguracion();
 
@@ -794,6 +796,7 @@ function inicializarApp() {
   inicializarFormularioManual();
   inicializarFiltrosCasosActivos();
   inicializarModuloConocimiento();
+  inicializarModuloDashboard();
   inicializarModuloReporte();
   inicializarModuloConfiguracion();
   inicializarBotonesGlobales();
