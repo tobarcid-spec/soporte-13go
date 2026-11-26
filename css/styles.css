@@ -514,6 +514,10 @@ tbody tr:last-child td { border-bottom: none; }
   font-weight: 600;
 }
 
+/* Respuesta desde el ticket */
+#respuesta-texto { width: 100%; margin-top: 8px; font-family: inherit; }
+.detalle-nota > div:last-child { white-space: pre-wrap; }
+
 /* ============================================================
    DASHBOARD
    ============================================================ */

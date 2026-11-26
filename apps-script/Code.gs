@@ -19,8 +19,9 @@
 //
 // SEGURIDAD
 // - La URL sola no sirve: toda petición debe traer el TOKEN.
-// - El script solo LEE correos sin leer de la bandeja de entrada y
-//   APLICA etiquetas de estado. No envía, no borra, no archiva.
+// - El script LEE correos sin leer de la bandeja de entrada, APLICA
+//   etiquetas de estado y CREA BORRADORES de respuesta.
+//   No envía, no borra, no archiva.
 // - Si el TOKEN se filtra, cámbialo aquí y vuelve a implementar.
 // ============================================================
 
@@ -62,6 +63,8 @@ function doPost(e) {
       case 'etiquetar':
         etiquetar(req.messageId, req.estado);
         return salida({ ok: true });
+      case 'borrador':
+        return salida({ ok: true, para: crearBorrador(req.messageId, req.texto, req.correoCliente) });
       default:
         return salida({ ok: false, error: 'Acción desconocida' });
     }
@@ -109,6 +112,30 @@ function etiquetar(messageId, estado) {
     if (etiqueta) hilo.removeLabel(etiqueta);
   });
   hilo.addLabel(GmailApp.getUserLabelByName(nombre) || GmailApp.createLabel(nombre));
+}
+
+/**
+ * Crea (sin enviar) un borrador de respuesta dentro del mismo hilo. Responde al
+ * último mensaje del cliente; si no lo encuentra, al correo original del ticket.
+ * Devuelve el destinatario del borrador para que la app lo muestre.
+ */
+function crearBorrador(messageId, texto, correoCliente) {
+  if (!messageId || !String(texto || '').trim()) throw new Error('Falta el correo o el texto');
+
+  const original = GmailApp.getMessageById(messageId);
+  const buscado = String(correoCliente || '').trim().toLowerCase();
+  let responderA = original;
+
+  if (buscado) {
+    original.getThread().getMessages().forEach(function (m) {
+      const de = m.getFrom();
+      const coincide = de.match(/<([^>]+)>/);
+      const direccion = (coincide ? coincide[1] : de).trim().toLowerCase();
+      if (!m.isDraft() && direccion === buscado) responderA = m;
+    });
+  }
+
+  return responderA.createDraftReply(String(texto)).getMessage().getTo();
 }
 
 function salida(objeto) {

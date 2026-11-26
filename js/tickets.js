@@ -422,6 +422,8 @@ function abrirDetalleTicket(id) {
       <button class="btn btn-peligro" id="btn-detalle-confirmar-escalar">Confirmar escalamiento</button>
     </div>
 
+    ${htmlBloqueRespuesta(ticket)}
+
     <h4>Notas de seguimiento</h4>
     <div class="detalle-notas">
       ${ticket.notas.length === 0
@@ -441,6 +443,7 @@ function abrirDetalleTicket(id) {
   `;
 
   abrirModalDetalle(html);
+  inicializarBloqueRespuesta(id);
 
   document.getElementById('detalle-select-categoria')?.addEventListener('change', e => cambiarCategoriaTicket(id, e.target.value));
   document.getElementById('detalle-select-prioridad')?.addEventListener('change', e => cambiarPrioridadTicket(id, e.target.value));
